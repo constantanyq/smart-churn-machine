@@ -1842,20 +1842,10 @@
                     Everything live or queued right now
                   </p>
                 </div>
-                <div class="flex items-center gap-2.5">
-                  <span
-                    class="text-[11px] font-mono text-mist-300 border border-ink-600 rounded-full px-2.5 py-1"
-                    >4 campaigns</span
-                  >
-                  <button
-                    id="new-campaign-btn"
-                    onclick="toggleCreateCampaignForm()"
-                    class="flex items-center gap-1.5 text-xs font-semibold text-white bg-copilot hover:bg-copilot/90 active:scale-[.98] rounded-lg px-3.5 py-2 transition-all"
-                  >
-                    <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14" /></svg>
-                    New campaign
-                  </button>
-                </div>
+                <span
+                  class="text-[11px] font-mono text-mist-300 border border-ink-600 rounded-full px-2.5 py-1"
+                  >4 campaigns</span
+                >
               </div>
               <div
                 class="flex flex-wrap items-center gap-2 px-5 py-3 border-b border-ink-600 bg-ink-900/40"
@@ -1885,120 +1875,51 @@
                       <th class="px-4 py-3 font-medium">Segment</th>
                       <th class="px-4 py-3 font-medium">Channels</th>
                       <th class="px-4 py-3 font-medium">Budget Used</th>
-                      <th class="px-4 py-3 font-medium">Status</th>
-                      <th class="px-5 py-3 font-medium text-right">Actions</th>
+                      <th class="px-5 py-3 font-medium">Status</th>
                     </tr>
                   </thead>
                   <tbody class="divide-y divide-ink-600 font-mono text-[13px]">
-                    <tr
-                      class="campaign-row"
-                      onmouseenter="showCampaignTooltip(event, this)"
-                      onmousemove="moveCampaignTooltip(event)"
-                      onmouseleave="hideCampaignTooltip()"
-                      data-name="VIP Loyalty Boost"
-                      data-duration="14 days"
-                      data-status-detail="2 days remaining"
-                      data-conversions="184"
-                      data-revenue="RM 11,280"
-                    >
+                    <tr>
                       <td class="px-5 py-3.5 font-body text-mist-100">VIP Loyalty Boost</td>
                       <td class="px-4 py-3.5 text-mist-300">VIP</td>
                       <td class="px-4 py-3.5 text-mist-300">Email, Push</td>
                       <td class="px-4 py-3.5 text-mist-300">RM 3,360 / 4,200</td>
-                      <td class="px-4 py-3.5">
+                      <td class="px-5 py-3.5">
                         <span class="badge bg-copilot/15 text-copilot">In Progress</span>
                       </td>
-                      <td class="px-5 py-3.5 text-right">
-                        <button onclick="event.stopPropagation(); openManageCampaign(this)" class="text-[11px] font-mono text-mist-100 border border-ink-600 hover:border-copilot/50 hover:text-copilot rounded-full px-3 py-1 transition-colors">Manage</button>
-                      </td>
                     </tr>
-                    <tr
-                      class="campaign-row"
-                      onmouseenter="showCampaignTooltip(event, this)"
-                      onmousemove="moveCampaignTooltip(event)"
-                      onmouseleave="hideCampaignTooltip()"
-                      data-name="Low-Usage Nudge"
-                      data-duration="21 days"
-                      data-status-detail="Starts in 3 days"
-                      data-conversions="0"
-                      data-revenue="RM 0"
-                    >
+                    <tr>
                       <td class="px-5 py-3.5 font-body text-mist-100">Low-Usage Nudge</td>
                       <td class="px-4 py-3.5 text-mist-300">Churn Risk</td>
                       <td class="px-4 py-3.5 text-mist-300">Email</td>
                       <td class="px-4 py-3.5 text-mist-300">RM 0 / 1,800</td>
-                      <td class="px-4 py-3.5">
+                      <td class="px-5 py-3.5">
                         <span class="badge bg-amber/15 text-amber">Scheduled</span>
                       </td>
-                      <td class="px-5 py-3.5 text-right">
-                        <button onclick="event.stopPropagation(); openManageCampaign(this)" class="text-[11px] font-mono text-mist-100 border border-ink-600 hover:border-copilot/50 hover:text-copilot rounded-full px-3 py-1 transition-colors">Manage</button>
-                      </td>
                     </tr>
-                    <tr
-                      class="campaign-row"
-                      onmouseenter="showCampaignTooltip(event, this)"
-                      onmousemove="moveCampaignTooltip(event)"
-                      onmouseleave="hideCampaignTooltip()"
-                      data-name="Trial Upgrade Push"
-                      data-duration="18 days"
-                      data-status-detail="Starts in 5 days"
-                      data-conversions="0"
-                      data-revenue="RM 0"
-                    >
+                    <tr>
                       <td class="px-5 py-3.5 font-body text-mist-100">Trial Upgrade Push</td>
                       <td class="px-4 py-3.5 text-mist-300">Potential</td>
                       <td class="px-4 py-3.5 text-mist-300">Email, SMS</td>
                       <td class="px-4 py-3.5 text-mist-300">RM 0 / 2,500</td>
-                      <td class="px-4 py-3.5">
+                      <td class="px-5 py-3.5">
                         <span class="badge bg-amber/15 text-amber">Scheduled</span>
                       </td>
-                      <td class="px-5 py-3.5 text-right">
-                        <button onclick="event.stopPropagation(); openManageCampaign(this)" class="text-[11px] font-mono text-mist-100 border border-ink-600 hover:border-copilot/50 hover:text-copilot rounded-full px-3 py-1 transition-colors">Manage</button>
-                      </td>
                     </tr>
-                    <tr
-                      class="campaign-row"
-                      onmouseenter="showCampaignTooltip(event, this)"
-                      onmousemove="moveCampaignTooltip(event)"
-                      onmouseleave="hideCampaignTooltip()"
-                      data-name="Spring Win-back"
-                      data-duration="30 days"
-                      data-status-detail="Completed"
-                      data-conversions="341"
-                      data-revenue="RM 22,900"
-                    >
+                    <tr>
                       <td class="px-5 py-3.5 font-body text-mist-100">Spring Win-back</td>
                       <td class="px-4 py-3.5 text-mist-300">Churn Risk</td>
                       <td class="px-4 py-3.5 text-mist-300">Email</td>
                       <td class="px-4 py-3.5 text-mist-300">RM 2,900 / 2,900</td>
-                      <td class="px-4 py-3.5">
+                      <td class="px-5 py-3.5">
                         <span class="badge bg-ink-700 text-mist-300">Completed</span>
-                      </td>
-                      <td class="px-5 py-3.5 text-right">
-                        <button onclick="event.stopPropagation(); openManageCampaign(this)" class="text-[11px] font-mono text-mist-100 border border-ink-600 hover:border-copilot/50 hover:text-copilot rounded-full px-3 py-1 transition-colors">Manage</button>
                       </td>
                     </tr>
                   </tbody>
                 </table>
               </div>
-
-              <!-- Floating campaign hover tooltip -->
-              <div
-                id="campaign-tooltip"
-                class="hidden fixed z-40 w-56 rounded-lg bg-ink-950 border border-ink-600 shadow-card px-3.5 py-3 pointer-events-none"
-              >
-                <p id="campaign-tooltip-name" class="text-xs font-semibold text-mist-100 mb-1.5"></p>
-                <div class="space-y-1 text-[11px] font-mono">
-                  <p class="flex justify-between text-mist-300"><span>Duration</span><span id="campaign-tooltip-duration" class="text-mist-100"></span></p>
-                  <p class="flex justify-between text-mist-300"><span>Status</span><span id="campaign-tooltip-status" class="text-signal"></span></p>
-                  <p class="flex justify-between text-mist-300"><span>Conversions</span><span id="campaign-tooltip-conversions" class="text-mist-100"></span></p>
-                  <p class="flex justify-between text-mist-300"><span>Revenue</span><span id="campaign-tooltip-revenue" class="text-amber"></span></p>
-                </div>
-              </div>
             </div>
 
-            <!-- Create Campaign section — hidden until "New campaign" is clicked -->
-            <div id="create-campaign-section" class="hidden space-y-6">
             <!-- Divider between the table and the create-campaign form -->
             <div class="flex items-center gap-3 py-1">
               <div class="flex-1 border-t border-ink-600"></div>
@@ -2012,23 +1933,12 @@
             <div
               class="rounded-xl bg-ink-800 border border-ink-600 shadow-card p-5"
             >
-              <div class="flex items-center justify-between">
-                <div>
-                  <h2 class="font-display font-semibold text-mist-100">
-                    Create Campaign
-                  </h2>
-                  <p class="text-xs text-mist-300 mt-0.5 mb-5">
-                    Set up a new retention or growth send
-                  </p>
-                </div>
-                <button
-                  onclick="toggleCreateCampaignForm()"
-                  class="row-action-btn"
-                  aria-label="Close"
-                >
-                  <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18" /></svg>
-                </button>
-              </div>
+              <h2 class="font-display font-semibold text-mist-100">
+                Create Campaign
+              </h2>
+              <p class="text-xs text-mist-300 mt-0.5 mb-5">
+                Set up a new retention or growth send
+              </p>
 
               <div class="grid grid-cols-1 lg:grid-cols-2 gap-x-6 gap-y-4">
                 <div>
@@ -2041,7 +1951,20 @@
                     class="w-full rounded-lg bg-ink-900 border border-ink-600 focus:border-copilot/60 focus:outline-none text-sm text-mist-100 placeholder-mist-300/60 px-3 py-2.5"
                   />
                 </div>
-                <div id="segment-multiselect-create" class="multiselect" data-selected="Churn Risk,VIP"></div>
+                <div>
+                  <label class="text-[11px] uppercase tracking-wide text-mist-300 mb-1.5 block"
+                    >Target Segment</label
+                  >
+                  <select
+                    class="w-full rounded-lg bg-ink-900 border border-ink-600 focus:border-copilot/60 focus:outline-none text-sm text-mist-100 px-3 py-2.5"
+                  >
+                    <option>VIP customers</option>
+                    <option>Loyal customers</option>
+                    <option>Churn risk customers</option>
+                    <option>Potential customers</option>
+                    <option>All customers</option>
+                  </select>
+                </div>
                 <div>
                   <label class="text-[11px] uppercase tracking-wide text-mist-300 mb-1.5 block"
                     >Channels</label
@@ -2207,112 +2130,10 @@
               </div>
 
               <button
-                onclick="scheduleCampaign()"
                 class="w-full mt-6 rounded-lg bg-signal hover:bg-signal/90 active:scale-[.98] text-ink-950 font-semibold text-sm py-2.5 transition-all"
               >
                 Schedule Campaign
               </button>
-            </div>
-            </div>
-            <!-- /#create-campaign-section -->
-
-            <!-- Manage Campaign section — hidden until "Manage" is clicked on a row -->
-            <div id="manage-campaign-section" class="hidden space-y-6">
-              <div class="flex items-center gap-3 py-1">
-                <div class="flex-1 border-t border-ink-600"></div>
-                <span class="text-[11px] uppercase tracking-wider text-mist-300/70 font-medium"
-                  >Manage Campaign</span
-                >
-                <div class="flex-1 border-t border-ink-600"></div>
-              </div>
-
-              <div class="rounded-xl bg-ink-800 border border-ink-600 shadow-card p-5">
-                <div class="flex items-center justify-between">
-                  <div>
-                    <h2 class="font-display font-semibold text-mist-100">
-                      Manage Campaign
-                    </h2>
-                    <p id="manage-campaign-subtitle" class="text-xs text-mist-300 mt-0.5 mb-5">
-                      Editing “VIP Loyalty Boost”
-                    </p>
-                  </div>
-                  <button onclick="toggleManageCampaignForm()" class="row-action-btn" aria-label="Close">
-                    <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18" /></svg>
-                  </button>
-                </div>
-
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-x-6 gap-y-4">
-                  <div>
-                    <label class="text-[11px] uppercase tracking-wide text-mist-300 mb-1.5 block"
-                      >Campaign Name</label
-                    >
-                    <input
-                      id="manage-campaign-name"
-                      type="text"
-                      class="w-full rounded-lg bg-ink-900 border border-ink-600 focus:border-copilot/60 focus:outline-none text-sm text-mist-100 placeholder-mist-300/60 px-3 py-2.5"
-                    />
-                  </div>
-                  <div id="segment-multiselect-manage" class="multiselect" data-selected="VIP"></div>
-                  <div>
-                    <label class="text-[11px] uppercase tracking-wide text-mist-300 mb-1.5 block"
-                      >Channels</label
-                    >
-                    <div class="flex flex-wrap gap-3 pt-1">
-                      <label class="flex items-center gap-1.5 text-xs text-mist-100 cursor-pointer select-none">
-                        <input type="checkbox" checked class="accent-copilot w-3.5 h-3.5" />
-                        Email
-                      </label>
-                      <label class="flex items-center gap-1.5 text-xs text-mist-100 cursor-pointer select-none">
-                        <input type="checkbox" class="accent-copilot w-3.5 h-3.5" />
-                        SMS
-                      </label>
-                      <label class="flex items-center gap-1.5 text-xs text-mist-100 cursor-pointer select-none">
-                        <input type="checkbox" class="accent-copilot w-3.5 h-3.5" />
-                        Push
-                      </label>
-                    </div>
-                  </div>
-                  <div>
-                    <label class="text-[11px] uppercase tracking-wide text-mist-300 mb-1.5 block"
-                      >Status</label
-                    >
-                    <select
-                      id="manage-campaign-status"
-                      class="w-full rounded-lg bg-ink-900 border border-ink-600 focus:border-copilot/60 focus:outline-none text-sm text-mist-100 px-3 py-2.5"
-                    >
-                      <option>In Progress</option>
-                      <option>Scheduled</option>
-                      <option>Paused</option>
-                      <option>Completed</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label class="text-[11px] uppercase tracking-wide text-mist-300 mb-1.5 block"
-                      >Budget (RM)</label
-                    >
-                    <input
-                      id="manage-campaign-budget"
-                      type="number"
-                      class="w-full rounded-lg bg-ink-900 border border-ink-600 focus:border-copilot/60 focus:outline-none text-sm text-mist-100 px-3 py-2.5"
-                    />
-                  </div>
-                </div>
-
-                <div class="flex items-center gap-3 mt-6">
-                  <button
-                    onclick="saveManageCampaign()"
-                    class="flex-1 rounded-lg bg-signal hover:bg-signal/90 active:scale-[.98] text-ink-950 font-semibold text-sm py-2.5 transition-all"
-                  >
-                    Save Changes
-                  </button>
-                  <button
-                    onclick="toggleManageCampaignForm()"
-                    class="rounded-lg border border-ink-600 hover:border-coral/50 hover:text-coral text-mist-300 font-semibold text-sm px-5 py-2.5 transition-all"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </div>
             </div>
           </section>
 
@@ -2485,7 +2306,7 @@
               </p>
 
               <div
-                class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mt-8 w-full max-w-3xl"
+                class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-8 w-full max-w-xl"
               >
                 <button
                   onclick="startQuickPrompt('clean')"
@@ -2521,17 +2342,6 @@
                   </p>
                 </button>
                 <button
-                  onclick="startQuickPrompt('recommend')"
-                  class="text-left rounded-xl bg-ink-800 border border-ink-600 hover:border-copilot/50 hover:bg-ink-700/60 shadow-card p-4 transition-all"
-                >
-                  <p class="text-sm font-semibold text-mist-100 mb-1">
-                    💡 AI Recommendations
-                  </p>
-                  <p class="text-[12px] text-mist-300 leading-relaxed">
-                    Suggest automated rescue campaigns based on my budget.
-                  </p>
-                </button>
-                <button
                   onclick="startQuickPrompt('campaigns')"
                   class="text-left rounded-xl bg-ink-800 border border-ink-600 hover:border-copilot/50 hover:bg-ink-700/60 shadow-card p-4 transition-all"
                 >
@@ -2540,17 +2350,6 @@
                   </p>
                   <p class="text-[12px] text-mist-300 leading-relaxed">
                     Show me an overview report of our recent campaigns.
-                  </p>
-                </button>
-                <button
-                  onclick="startQuickPrompt('sentiment')"
-                  class="text-left rounded-xl bg-ink-800 border border-ink-600 hover:border-copilot/50 hover:bg-ink-700/60 shadow-card p-4 transition-all"
-                >
-                  <p class="text-sm font-semibold text-mist-100 mb-1">
-                    💬 Analyze Sentiment
-                  </p>
-                  <p class="text-[12px] text-mist-300 leading-relaxed">
-                    Summarize recent customer feedback and support tickets.
                   </p>
                 </button>
               </div>
@@ -3306,213 +3105,6 @@
       }
 
       /* =================================================================
-     3a-iv. CAMPAIGNS — Create/Manage panel toggles
-  ==================================================================*/
-      function toggleCreateCampaignForm(forceOpen) {
-        const section = document.getElementById("create-campaign-section");
-        const manageSection = document.getElementById("manage-campaign-section");
-        const shouldOpen =
-          forceOpen !== undefined ? forceOpen : section.classList.contains("hidden");
-        if (shouldOpen) {
-          manageSection.classList.add("hidden");
-          section.classList.remove("hidden");
-          section.scrollIntoView({ behavior: "smooth", block: "start" });
-        } else {
-          section.classList.add("hidden");
-        }
-      }
-
-      function toggleManageCampaignForm(forceOpen) {
-        const section = document.getElementById("manage-campaign-section");
-        const createSection = document.getElementById("create-campaign-section");
-        const shouldOpen =
-          forceOpen !== undefined ? forceOpen : section.classList.contains("hidden");
-        if (shouldOpen) {
-          createSection.classList.add("hidden");
-          section.classList.remove("hidden");
-          section.scrollIntoView({ behavior: "smooth", block: "start" });
-        } else {
-          section.classList.add("hidden");
-        }
-      }
-
-      function openManageCampaign(btn) {
-        const row = btn.closest("tr");
-        if (!row) return;
-        const name = row.dataset.name || "Campaign";
-        const cells = row.querySelectorAll("td");
-
-        document.getElementById("manage-campaign-subtitle").textContent =
-          `Editing “${name}”`;
-        document.getElementById("manage-campaign-name").value = name;
-
-        const statusBadge = row.querySelector(".badge");
-        if (statusBadge) {
-          document.getElementById("manage-campaign-status").value =
-            statusBadge.textContent.trim();
-        }
-
-        const budgetText = cells[3] ? cells[3].textContent : "";
-        const budgetMatch = budgetText.match(/\/\s*([\d,]+)/);
-        document.getElementById("manage-campaign-budget").value = budgetMatch
-          ? budgetMatch[1].replace(/,/g, "")
-          : "";
-
-        const segmentText = cells[1] ? cells[1].textContent.trim() : "VIP";
-        const manageMultiselect = document.getElementById(
-          "segment-multiselect-manage",
-        );
-        manageMultiselect.dataset.selected = segmentText;
-        buildMultiselect("segment-multiselect-manage");
-
-        toggleManageCampaignForm(true);
-      }
-
-      function saveManageCampaign() {
-        alert("Campaign changes saved.");
-        toggleManageCampaignForm(false);
-      }
-
-      function scheduleCampaign() {
-        alert("Campaign scheduled.");
-        toggleCreateCampaignForm(false);
-      }
-
-      /* =================================================================
-     3a-v. CAMPAIGNS — floating hover tooltip on table rows
-  ==================================================================*/
-      function showCampaignTooltip(evt, row) {
-        const tooltip = document.getElementById("campaign-tooltip");
-        document.getElementById("campaign-tooltip-name").textContent =
-          row.dataset.name || "";
-        document.getElementById("campaign-tooltip-duration").textContent =
-          row.dataset.duration || "";
-        document.getElementById("campaign-tooltip-status").textContent =
-          row.dataset.statusDetail || "";
-        document.getElementById("campaign-tooltip-conversions").textContent =
-          row.dataset.conversions || "";
-        document.getElementById("campaign-tooltip-revenue").textContent =
-          row.dataset.revenue || "";
-        tooltip.classList.remove("hidden");
-        moveCampaignTooltip(evt);
-      }
-
-      function moveCampaignTooltip(evt) {
-        const tooltip = document.getElementById("campaign-tooltip");
-        const offset = 16;
-        let x = evt.clientX + offset;
-        let y = evt.clientY + offset;
-        const rect = tooltip.getBoundingClientRect();
-        if (x + rect.width > window.innerWidth) x = evt.clientX - rect.width - offset;
-        if (y + rect.height > window.innerHeight)
-          y = evt.clientY - rect.height - offset;
-        tooltip.style.left = `${x}px`;
-        tooltip.style.top = `${y}px`;
-      }
-
-      function hideCampaignTooltip() {
-        document.getElementById("campaign-tooltip").classList.add("hidden");
-      }
-
-      /* =================================================================
-     3a-vi. CAMPAIGNS — custom multi-select "Target Segment" component
-  ==================================================================*/
-      const SEGMENT_OPTIONS = [
-        "Churn Risk",
-        "VIP",
-        "Age 18-25",
-        "Premium Plan",
-        "Loyal Customers",
-        "Potential Customers",
-      ];
-
-      function buildMultiselect(containerId) {
-        const container = document.getElementById(containerId);
-        if (!container) return;
-        const selected = (container.dataset.selected || "")
-          .split(",")
-          .map((s) => s.trim())
-          .filter(Boolean);
-
-        container.innerHTML = `
-        <label class="text-[11px] uppercase tracking-wide text-mist-300 mb-1.5 block">Target Segment</label>
-        <div class="relative">
-          <button type="button" onclick="toggleMultiselectPanel('${containerId}')" class="w-full min-h-[42px] flex flex-wrap items-center gap-1.5 rounded-lg bg-ink-900 border border-ink-600 focus:border-copilot/60 focus:outline-none text-sm text-mist-100 px-3 py-2 text-left">
-            <span class="flex flex-wrap gap-1.5 flex-1" id="${containerId}-tags"></span>
-            <svg class="w-3.5 h-3.5 text-mist-300 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
-          </button>
-          <div id="${containerId}-panel" class="hidden absolute z-20 mt-1.5 w-full rounded-lg bg-ink-800 border border-ink-600 shadow-card py-1.5 max-h-48 overflow-y-auto thin-scroll">
-            ${SEGMENT_OPTIONS.map(
-              (opt) => `
-              <label class="flex items-center gap-2 px-3 py-2 text-xs text-mist-100 hover:bg-ink-700/60 cursor-pointer select-none">
-                <input type="checkbox" value="${opt}" class="accent-copilot w-3.5 h-3.5" onchange="renderMultiselectTags('${containerId}')" ${selected.includes(opt) ? "checked" : ""} />
-                ${opt}
-              </label>
-            `,
-            ).join("")}
-          </div>
-        </div>
-      `;
-        renderMultiselectTags(containerId);
-      }
-
-      function renderMultiselectTags(containerId) {
-        const panel = document.getElementById(`${containerId}-panel`);
-        const tagsEl = document.getElementById(`${containerId}-tags`);
-        if (!panel || !tagsEl) return;
-        const checked = Array.from(panel.querySelectorAll("input:checked")).map(
-          (i) => i.value,
-        );
-        if (checked.length === 0) {
-          tagsEl.innerHTML = `<span class="text-mist-300/60">Select segments…</span>`;
-          return;
-        }
-        tagsEl.innerHTML = checked
-          .map(
-            (v) => `
-          <span class="inline-flex items-center gap-1 bg-copilot/15 text-copilot text-[11px] font-medium rounded-full pl-2.5 pr-1.5 py-0.5">
-            ${v}
-            <button type="button" onclick="event.stopPropagation(); removeMultiselectTag('${containerId}', '${v.replace(/'/g, "\\'")}')" class="hover:text-white">
-              <svg class="w-2.5 h-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M6 6l12 12M18 6L6 18"/></svg>
-            </button>
-          </span>
-        `,
-          )
-          .join("");
-      }
-
-      function removeMultiselectTag(containerId, value) {
-        const panel = document.getElementById(`${containerId}-panel`);
-        if (!panel) return;
-        const input = Array.from(panel.querySelectorAll("input")).find(
-          (i) => i.value === value,
-        );
-        if (input) input.checked = false;
-        renderMultiselectTags(containerId);
-      }
-
-      function toggleMultiselectPanel(containerId) {
-        document
-          .querySelectorAll("[id$='-panel']")
-          .forEach((p) => {
-            if (p.id !== `${containerId}-panel` && p.closest(".multiselect")) {
-              p.classList.add("hidden");
-            }
-          });
-        const panel = document.getElementById(`${containerId}-panel`);
-        if (panel) panel.classList.toggle("hidden");
-      }
-
-      document.addEventListener("click", (e) => {
-        document.querySelectorAll(".multiselect").forEach((ms) => {
-          if (!ms.contains(e.target)) {
-            const panel = ms.querySelector("[id$='-panel']");
-            if (panel) panel.classList.add("hidden");
-          }
-        });
-      });
-
-      /* =================================================================
      3b. CHURN PREDICTION — dynamic filters + explainability drawer
   ==================================================================*/
       function filterRiskTable() {
@@ -3903,9 +3495,7 @@
         clean: "Upload a messy CSV for auto-cleaning and integration.",
         audience: "Show me high-value VIPs currently at risk of leaving.",
         simulate: "What if I offer a 15% discount to at-risk VIPs?",
-        recommend: "Suggest automated rescue campaigns based on my budget.",
         campaigns: "Show me an overview report of our recent campaigns.",
-        sentiment: "Summarize recent customer feedback and support tickets.",
       };
 
       function startQuickPrompt(kind) {
@@ -3920,9 +3510,7 @@
           if (kind === "clean") runCleanDataFlow();
           else if (kind === "audience") runFindAudiencesFlow();
           else if (kind === "simulate") runSimulateStrategyFlow();
-          else if (kind === "recommend") runAiRecommendationsFlow();
           else if (kind === "campaigns") runAnalyzeCampaignsFlow();
-          else if (kind === "sentiment") runAnalyzeSentimentFlow();
           simulationBusy = false;
         }, 1000);
       }
@@ -3997,7 +3585,6 @@
       function runFindAudiencesFlow() {
         widgetCounter += 1;
         const id = widgetCounter;
-        const chartId = `chart-audience-engagement-${id}`;
         const wrap = document.createElement("div");
         wrap.className = "chat-bubble-ai px-4 py-3.5 max-w-[95%] reveal";
         wrap.innerHTML = `
@@ -4008,20 +3595,15 @@
             <tr class="text-left text-[10px] uppercase tracking-wide text-mist-300 bg-ink-900/60">
               <th class="px-3 py-2 font-medium">Customer</th>
               <th class="px-3 py-2 font-medium">Segment</th>
-              <th class="px-3 py-2 font-medium">Primary Risk Factor</th>
               <th class="px-3 py-2 font-medium text-right">Engagement (14d)</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-ink-600 font-mono">
-            <tr><td class="px-3 py-2 font-body text-mist-100">Aisyah R.</td><td class="px-3 py-2 text-mist-300">VIP</td><td class="px-3 py-2 text-mist-300 font-body">Open support ticket</td><td class="px-3 py-2 text-coral text-right">▼ 38%</td></tr>
-            <tr><td class="px-3 py-2 font-body text-mist-100">Farah Z.</td><td class="px-3 py-2 text-mist-300">VIP</td><td class="px-3 py-2 text-mist-300 font-body">Usage dropped 40%</td><td class="px-3 py-2 text-coral text-right">▼ 31%</td></tr>
-            <tr><td class="px-3 py-2 font-body text-mist-100">Sofia H.</td><td class="px-3 py-2 text-mist-300">VIP</td><td class="px-3 py-2 text-mist-300 font-body">Billing failure</td><td class="px-3 py-2 text-coral text-right">▼ 27%</td></tr>
+            <tr><td class="px-3 py-2 font-body text-mist-100">Aisyah R.</td><td class="px-3 py-2 text-mist-300">VIP</td><td class="px-3 py-2 text-coral text-right">▼ 38%</td></tr>
+            <tr><td class="px-3 py-2 font-body text-mist-100">Farah Z.</td><td class="px-3 py-2 text-mist-300">VIP</td><td class="px-3 py-2 text-coral text-right">▼ 31%</td></tr>
+            <tr><td class="px-3 py-2 font-body text-mist-100">Sofia H.</td><td class="px-3 py-2 text-mist-300">VIP</td><td class="px-3 py-2 text-coral text-right">▼ 27%</td></tr>
           </tbody>
         </table>
-      </div>
-      <div class="rounded-lg bg-ink-900/60 border border-ink-600 p-3 mb-3">
-        <p class="text-[11px] font-medium text-mist-100 mb-2">14-Day Engagement Drop — At-Risk VIP Cohort</p>
-        <div class="h-32"><canvas id="${chartId}"></canvas></div>
       </div>
       <div id="action-zone-audience-${id}"></div>
     `;
@@ -4034,51 +3616,6 @@
         btn.onclick = () => draftWinbackCampaign(btn);
         zone.appendChild(btn);
         scrollChatToBottom();
-        renderAudienceEngagementChart(document.getElementById(chartId));
-      }
-
-      function renderAudienceEngagementChart(canvasEl) {
-        if (!canvasEl) return;
-        const labels = Array.from({ length: 14 }, (_, i) => `D${i + 1}`);
-        const data = [100, 97, 95, 91, 88, 84, 79, 76, 71, 67, 63, 59, 54, 51];
-        return new Chart(canvasEl.getContext("2d"), {
-          type: "line",
-          data: {
-            labels,
-            datasets: [
-              {
-                label: "Engagement Index",
-                data,
-                borderColor: "#F0584C",
-                backgroundColor: "rgba(240, 88, 76, 0.08)",
-                fill: true,
-                pointRadius: 0,
-                tension: 0.35,
-              },
-            ],
-          },
-          options: {
-            plugins: { legend: { display: false } },
-            scales: {
-              x: {
-                ticks: {
-                  color: "#8B97A6",
-                  font: { family: "IBM Plex Mono", size: 9 },
-                  maxTicksLimit: 7,
-                },
-                grid: { display: false },
-              },
-              y: {
-                ticks: {
-                  color: "#8B97A6",
-                  font: { family: "IBM Plex Mono", size: 9 },
-                },
-                grid: { color: "#1A232E" },
-              },
-            },
-            maintainAspectRatio: false,
-          },
-        });
       }
 
       function draftWinbackCampaign(btn) {
@@ -4347,191 +3884,6 @@
       }
 
       /* =================================================================
-     6h. FLOW — AI Recommendations (rescue campaign card grid)
-  ==================================================================*/
-      const RESCUE_RECOMMENDATIONS = [
-        {
-          segment: "Churn Risk",
-          badgeClass: "bg-coral/15 text-coral",
-          channel: "Email",
-          title: "Low-Usage Re-engagement",
-          description:
-            "Nudge dormant accounts with a feature highlight and a limited-time credit.",
-          budget: "RM 1,200",
-          revenue: "RM 9,800",
-          probability: 61,
-        },
-        {
-          segment: "VIP",
-          badgeClass: "bg-amber/15 text-amber",
-          channel: "Push",
-          title: "VIP Loyalty Reward",
-          description:
-            "Surprise top-tier accounts with an early-access perk before renewal.",
-          budget: "RM 2,000",
-          revenue: "RM 18,400",
-          probability: 74,
-        },
-        {
-          segment: "Premium Plan",
-          badgeClass: "bg-copilot/15 text-copilot",
-          channel: "Email",
-          title: "Plan Downgrade Prevention",
-          description:
-            "Target accounts browsing the downgrade page with a value-add bundle.",
-          budget: "RM 900",
-          revenue: "RM 6,300",
-          probability: 55,
-        },
-        {
-          segment: "Age 18-25",
-          badgeClass: "bg-signal/15 text-signal",
-          channel: "SMS",
-          title: "Student Win-back",
-          description:
-            "Short, punchy SMS offer timed to semester billing cycles.",
-          budget: "RM 700",
-          revenue: "RM 4,900",
-          probability: 48,
-        },
-        {
-          segment: "Potential",
-          badgeClass: "bg-copilot/15 text-copilot",
-          channel: "Email",
-          title: "Trial Conversion Push",
-          description:
-            "Send a case-study-driven nudge in the final 3 days of trial.",
-          budget: "RM 1,500",
-          revenue: "RM 12,100",
-          probability: 66,
-        },
-        {
-          segment: "Churn Risk",
-          badgeClass: "bg-coral/15 text-coral",
-          channel: "Push",
-          title: "Support Ticket Follow-up",
-          description:
-            "Auto-follow-up 48h after an unresolved ticket with a goodwill credit.",
-          budget: "RM 500",
-          revenue: "RM 5,600",
-          probability: 58,
-        },
-      ];
-
-      function runAiRecommendationsFlow() {
-        widgetCounter += 1;
-        const baseId = widgetCounter;
-        const wrap = document.createElement("div");
-        wrap.className = "chat-bubble-ai px-4 py-3.5 max-w-[97%] reveal";
-
-        const cardsHTML = RESCUE_RECOMMENDATIONS.map((rec, i) => {
-          const cardId = `rec-card-${baseId}-${i}`;
-          return `
-          <div id="${cardId}" class="rounded-lg bg-ink-900 border border-ink-600 p-3.5 flex flex-col gap-2">
-            <div class="flex items-center justify-between">
-              <span class="badge ${rec.badgeClass}">${rec.segment}</span>
-              <span class="text-[10px] font-mono text-mist-300 uppercase">${rec.channel}</span>
-            </div>
-            <p class="text-sm font-semibold text-mist-100">${rec.title}</p>
-            <p class="text-[11.5px] text-mist-300 leading-relaxed">${rec.description}</p>
-            <div class="flex items-center justify-between text-[11px] font-mono mt-1">
-              <span class="text-mist-300">Budget <span class="text-mist-100">${rec.budget}</span></span>
-              <span class="text-mist-300">Revenue <span class="text-amber">${rec.revenue}</span></span>
-            </div>
-            <div>
-              <div class="flex items-center justify-between text-[10px] text-mist-300 mb-1">
-                <span>Success Probability</span>
-                <span class="text-signal font-mono">${rec.probability}%</span>
-              </div>
-              <div class="h-1.5 rounded-full bg-ink-700 overflow-hidden">
-                <div class="h-full bg-signal rounded-full" style="width: ${rec.probability}%"></div>
-              </div>
-            </div>
-            <button onclick="applyRecommendation('${cardId}', '${rec.title.replace(/'/g, "\\'")}')" class="w-full mt-1 rounded-lg bg-copilot hover:bg-copilot/90 active:scale-[.98] text-white font-semibold text-xs py-2 transition-all">Apply</button>
-          </div>
-        `;
-        }).join("");
-
-        wrap.innerHTML = `
-      <p class="text-sm text-mist-100 leading-relaxed mb-3">Based on your available budget, here are <span class="font-semibold">6 automated rescue campaigns</span> ranked by expected revenue retained.</p>
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-        ${cardsHTML}
-      </div>
-    `;
-        chatThread.appendChild(wrap);
-        scrollChatToBottom();
-      }
-
-      function applyRecommendation(cardId, title) {
-        const card = document.getElementById(cardId);
-        if (!card) return;
-        const btn = card.querySelector("button");
-        if (btn.disabled) return;
-        btn.disabled = true;
-        btn.textContent = "Applied ✓";
-        btn.classList.remove("bg-copilot", "hover:bg-copilot/90");
-        btn.classList.add("bg-signal", "text-ink-950", "cursor-default");
-        card.classList.add("border-signal/40");
-        appendUserMessage(`Apply the "${title}" campaign.`);
-        appendTypingIndicator();
-        setTimeout(() => {
-          removeTypingIndicator();
-          const confirm = document.createElement("div");
-          confirm.className = "chat-bubble-ai px-3.5 py-2.5 max-w-[92%] reveal";
-          confirm.innerHTML = `
-        <p class="text-sm text-signal font-semibold flex items-center gap-1.5">
-          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 12.5l5 5L20 6.5"/></svg>
-          Campaign Queued
-        </p>
-        <p class="text-[12px] text-mist-300 mt-1">“${title}” has been added to Scheduled Campaigns for review.</p>
-      `;
-          chatThread.appendChild(confirm);
-          scrollChatToBottom();
-        }, 900);
-      }
-
-      /* =================================================================
-     6i. FLOW — Analyze Sentiment (support ticket & feedback breakdown)
-  ==================================================================*/
-      function runAnalyzeSentimentFlow() {
-        widgetCounter += 1;
-        const wrap = document.createElement("div");
-        wrap.className = "chat-bubble-ai px-4 py-3.5 max-w-[95%] reveal";
-        wrap.innerHTML = `
-      <p class="text-sm text-mist-100 leading-relaxed mb-3">I've analyzed 412 support tickets and feedback forms from the last 14 days. Here is the sentiment breakdown.</p>
-      <div class="grid grid-cols-2 gap-3 mb-3">
-        <div class="rounded-lg bg-ink-900 border border-ink-600 px-3 py-2.5">
-          <p class="text-[10px] uppercase tracking-wide text-mist-300">Sentiment Score</p>
-          <p class="text-lg font-display font-semibold text-signal mt-0.5">72<span class="text-xs text-mist-300">/100</span></p>
-        </div>
-        <div class="rounded-lg bg-ink-900 border border-ink-600 px-3 py-2.5">
-          <p class="text-[10px] uppercase tracking-wide text-mist-300">Negative Feedback Share</p>
-          <p class="text-lg font-display font-semibold text-coral mt-0.5">18%</p>
-        </div>
-      </div>
-      <div class="rounded-lg bg-ink-900/60 border border-ink-600 px-3.5 py-3">
-        <p class="text-[10px] uppercase tracking-wide text-copilot font-medium mb-2">Top 3 Complaints</p>
-        <ul class="space-y-2 text-[12.5px] text-mist-100">
-          <li class="flex items-center justify-between">
-            <span>Mobile app freezing</span>
-            <span class="text-coral font-mono text-[11px]">34%</span>
-          </li>
-          <li class="flex items-center justify-between">
-            <span>Price transparency</span>
-            <span class="text-amber font-mono text-[11px]">27%</span>
-          </li>
-          <li class="flex items-center justify-between">
-            <span>Slow support response time</span>
-            <span class="text-amber font-mono text-[11px]">19%</span>
-          </li>
-        </ul>
-      </div>
-    `;
-        chatThread.appendChild(wrap);
-        scrollChatToBottom();
-      }
-
-      /* =================================================================
      6g. Free-typed "what if" questions from the input bar
   ==================================================================*/
       function sendSimulation() {
@@ -4567,8 +3919,6 @@
       initOverviewSegmentChart();
       chartsInitialized.overviewTrend = true;
       chartsInitialized.overviewSegment = true;
-      buildMultiselect("segment-multiselect-create");
-      buildMultiselect("segment-multiselect-manage");
     </script>
   </body>
 </html>
