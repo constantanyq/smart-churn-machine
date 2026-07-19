@@ -1,0 +1,3924 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Pulse · AI Marketing Console</title>
+
+    <!-- Tailwind (CDN build, config extended below with our own design tokens) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Chart.js — powers KPI drill-downs, feature-importance, and campaign analytics -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+
+    <!-- Type system: Space Grotesk for display/numbers, Inter for body, IBM Plex Mono for data/telemetry -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              ink: {
+                950: "#0A0E13",
+                900: "#0E141B",
+                800: "#131B24",
+                700: "#1A232E",
+                600: "#232E3B",
+                500: "#31404F",
+              },
+              mist: { 300: "#8B97A6", 200: "#AEB8C4", 100: "#E7ECF2" },
+              signal: { DEFAULT: "#2FD8B0", dim: "#1B7A63" },
+              amber: { DEFAULT: "#F0A93E" },
+              coral: { DEFAULT: "#F0584C" },
+              copilot: { DEFAULT: "#7C8CF6", dim: "#4C56A8" }, // reserved ONLY for AI-generated voice
+            },
+            fontFamily: {
+              display: ['"Space Grotesk"', "sans-serif"],
+              body: ['"Inter"', "sans-serif"],
+              mono: ['"IBM Plex Mono"', "monospace"],
+            },
+            boxShadow: {
+              card: "0 1px 0 0 rgba(255,255,255,0.04) inset, 0 12px 24px -12px rgba(0,0,0,0.5)",
+            },
+          },
+        },
+      };
+    </script>
+
+    <style>
+      body {
+        background:
+          radial-gradient(
+            1200px 600px at 15% -10%,
+            rgba(124, 140, 246, 0.08),
+            transparent 60%
+          ),
+          radial-gradient(
+            1000px 500px at 100% 0%,
+            rgba(47, 216, 176, 0.06),
+            transparent 55%
+          ),
+          #0a0e13;
+      }
+      ::selection {
+        background: rgba(124, 140, 246, 0.35);
+      }
+      .thin-scroll::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+      }
+      .thin-scroll::-webkit-scrollbar-thumb {
+        background: #31404f;
+        border-radius: 999px;
+      }
+      .thin-scroll::-webkit-scrollbar-track {
+        background: transparent;
+      }
+
+      .row-action-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 26px;
+        height: 26px;
+        border-radius: 7px;
+        border: 1px solid #232e3b;
+        color: #8b97a6;
+        transition: all 0.15s ease;
+      }
+      .row-action-btn:hover {
+        color: #e7ecf2;
+        border-color: #31404f;
+        background: #1a232e;
+      }
+      .status-badge.is-paused {
+        background: rgba(240, 88, 76, 0.12) !important;
+        color: #f0584c !important;
+      }
+
+      /* Signature element: the Data→Action pipeline (lives on the AI Copilot tab) */
+      .pipeline-rail {
+        position: absolute;
+        left: 15px;
+        top: 8px;
+        bottom: 8px;
+        width: 2px;
+        background: #232e3b;
+      }
+      .pipeline-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 999px;
+        background: #1a232e;
+        border: 2px solid #31404f;
+        transition: all 0.4s ease;
+      }
+      .pipeline-dot.lit {
+        background: #7c8cf6;
+        border-color: #7c8cf6;
+        box-shadow: 0 0 0 4px rgba(124, 140, 246, 0.18);
+      }
+      .pipeline-flow {
+        position: absolute;
+        left: 15px;
+        top: 8px;
+        width: 2px;
+        height: 0%;
+        background: linear-gradient(to bottom, #7c8cf6, rgba(124, 140, 246, 0));
+        transition: height 1.1s cubic-bezier(0.16, 0.84, 0.44, 1);
+      }
+
+      @keyframes revealUp {
+        from {
+          opacity: 0;
+          transform: translateY(6px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      .reveal {
+        animation: revealUp 0.45s ease forwards;
+      }
+      @keyframes softPulse {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.55;
+        }
+      }
+      .pulse-copilot {
+        animation: softPulse 1.6s ease-in-out infinite;
+      }
+      .row-flagged {
+        box-shadow: inset 3px 0 0 0 #7c8cf6;
+        background: rgba(124, 140, 246, 0.06);
+      }
+      @media (prefers-reduced-motion: reduce) {
+        * {
+          animation-duration: 0.001ms !important;
+          transition-duration: 0.001ms !important;
+        }
+      }
+
+      .kpi-clickable {
+        cursor: pointer;
+        transition:
+          transform 0.18s ease,
+          border-color 0.18s ease,
+          background 0.18s ease;
+      }
+      .kpi-clickable:hover {
+        transform: translateY(-2px);
+        background: #16202b;
+      }
+      .kpi-clickable:active {
+        transform: translateY(0);
+      }
+
+      #chart-modal {
+        transition: opacity 0.2s ease;
+      }
+      #chart-modal[data-open="true"] {
+        opacity: 1;
+        pointer-events: auto;
+      }
+      #chart-modal[data-open="false"] {
+        opacity: 0;
+        pointer-events: none;
+      }
+      @keyframes modalIn {
+        from {
+          opacity: 0;
+          transform: scale(0.97) translateY(6px);
+        }
+        to {
+          opacity: 1;
+          transform: scale(1) translateY(0);
+        }
+      }
+      .modal-panel {
+        animation: modalIn 0.25s cubic-bezier(0.16, 0.84, 0.44, 1);
+      }
+
+      #chat-thread {
+        max-height: 420px;
+      }
+      .chat-bubble-user {
+        background: #1a232e;
+        border: 1px solid #232e3b;
+        border-radius: 12px 12px 2px 12px;
+      }
+      .chat-bubble-ai {
+        background: rgba(124, 140, 246, 0.06);
+        border: 1px solid rgba(124, 140, 246, 0.25);
+        border-radius: 12px 12px 12px 2px;
+      }
+      @keyframes typingBounce {
+        0%,
+        60%,
+        100% {
+          transform: translateY(0);
+          opacity: 0.5;
+        }
+        30% {
+          transform: translateY(-3px);
+          opacity: 1;
+        }
+      }
+      .typing-dot {
+        animation: typingBounce 1.1s ease-in-out infinite;
+      }
+      .typing-dot:nth-child(2) {
+        animation-delay: 0.15s;
+      }
+      .typing-dot:nth-child(3) {
+        animation-delay: 0.3s;
+      }
+
+      /* Tab panels */
+      .tab-panel.hidden {
+        display: none;
+      }
+
+      /* Nav link active state */
+      .nav-link {
+        transition:
+          background 0.15s ease,
+          color 0.15s ease;
+      }
+      .nav-link.active {
+        background: #1a232e;
+        color: #e7ecf2;
+        border-color: #232e3b;
+      }
+      .nav-link:not(.active) {
+        color: #8b97a6;
+        border-color: transparent;
+      }
+      .nav-link:not(.active):hover {
+        background: rgba(26, 35, 46, 0.6);
+        color: #e7ecf2;
+      }
+      .nav-link-copilot.active {
+        background: rgba(124, 140, 246, 0.1);
+        color: #e7ecf2;
+        border-color: rgba(124, 140, 246, 0.35);
+      }
+      .nav-link-copilot:not(.active) {
+        color: #a7aef4;
+      }
+      .nav-link-copilot:not(.active):hover {
+        background: rgba(124, 140, 246, 0.08);
+      }
+
+      .prediction-tab-btn {
+        color: #8b97a6;
+      }
+      .prediction-tab-btn:hover {
+        color: #e7ecf2;
+      }
+      .prediction-tab-btn.prediction-tab-active {
+        background: #232e3b;
+        color: #e7ecf2;
+      }
+
+      /* A/B Testing toggle switch */
+      .ab-toggle-switch {
+        position: relative;
+        width: 42px;
+        height: 24px;
+        border-radius: 999px;
+        background: #232e3b;
+        border: 1px solid #31404f;
+        flex-shrink: 0;
+        cursor: pointer;
+        transition: background 0.2s ease, border-color 0.2s ease;
+      }
+      .ab-toggle-knob {
+        position: absolute;
+        top: 2px;
+        left: 2px;
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        background: #aeb8c4;
+        transition: transform 0.2s ease, background 0.2s ease;
+      }
+      .ab-toggle-switch[aria-checked="true"] {
+        background: rgba(124, 140, 246, 0.25);
+        border-color: #7c8cf6;
+      }
+      .ab-toggle-switch[aria-checked="true"] .ab-toggle-knob {
+        transform: translateX(18px);
+        background: #7c8cf6;
+      }
+
+      .calendar-cell {
+        min-height: 76px;
+        border-radius: 8px;
+        border: 1px solid #1a232e;
+        background: rgba(19, 27, 36, 0.4);
+        padding: 6px 7px;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        align-items: flex-start;
+      }
+      .calendar-cell.is-today {
+        border-color: #2fd8b0;
+        background: rgba(47, 216, 176, 0.06);
+      }
+      .calendar-date {
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 11px;
+        color: #aeb8c4;
+      }
+      .calendar-event {
+        font-size: 10px;
+        line-height: 1.3;
+        padding: 3px 6px;
+        border-radius: 5px;
+        font-weight: 500;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 100%;
+      }
+
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 3px 10px;
+        border-radius: 999px;
+        font-size: 11px;
+        font-weight: 600;
+      }
+
+      /* KPI delta indicators (vs. prior period) */
+      .kpi-delta {
+        display: inline-flex;
+        align-items: center;
+        gap: 3px;
+        font-size: 11px;
+        font-family: "IBM Plex Mono", monospace;
+        font-weight: 500;
+        margin-top: 6px;
+      }
+      .kpi-delta.up {
+        color: #2fd8b0;
+      }
+      .kpi-delta.down {
+        color: #f0584c;
+      }
+
+      /* Explainability side drawer (Churn Prediction tab) */
+      #explain-drawer-backdrop {
+        transition: opacity 0.2s ease;
+      }
+      #explain-drawer-backdrop[data-open="false"] {
+        opacity: 0;
+        pointer-events: none;
+      }
+      #explain-drawer-backdrop[data-open="true"] {
+        opacity: 1;
+        pointer-events: auto;
+      }
+      #explain-drawer {
+        transition: transform 0.28s cubic-bezier(0.16, 0.84, 0.44, 1);
+        transform: translateX(100%);
+      }
+      #explain-drawer-backdrop[data-open="true"] #explain-drawer {
+        transform: translateX(0);
+      }
+      .risk-row {
+        cursor: pointer;
+      }
+      .risk-row:hover {
+        background: #16202b;
+      }
+    </style>
+  </head>
+
+  <body class="font-body text-mist-100 min-h-screen">
+    <div class="flex min-h-screen">
+      <!-- ============================== SIDE NAV ============================== -->
+      <aside
+        class="hidden lg:flex flex-col w-64 shrink-0 border-r border-ink-600 bg-ink-900/60 backdrop-blur-sm"
+      >
+        <div
+          class="h-16 flex items-center gap-2.5 px-6 border-b border-ink-600"
+        >
+          <div
+            class="w-8 h-8 rounded-full border-[1.5px] border-signal flex items-center justify-center shrink-0"
+          >
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="#2FD8B0"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <polyline points="2,13 7,13 9,7 13,19 16,13 22,13" />
+            </svg>
+          </div>
+          <div class="leading-tight">
+            <p
+              class="font-display font-bold text-base tracking-tight text-mist-100"
+            >
+              Pulse
+            </p>
+            <p
+              class="text-[9px] font-semibold tracking-wider text-mist-300/80 uppercase"
+            >
+              AI Marketing Console
+            </p>
+          </div>
+        </div>
+
+        <nav class="flex-1 px-3 py-5 space-y-1 thin-scroll overflow-y-auto">
+          <p
+            class="px-3 pb-2 text-[11px] uppercase tracking-wider text-mist-300/70 font-medium"
+          >
+            Workspace
+          </p>
+
+          <button
+            data-tab="overview"
+            onclick="switchTab('overview')"
+            class="nav-link active w-full flex items-center gap-3 px-3 py-2.5 rounded-lg border text-left"
+          >
+            <svg
+              class="w-4 h-4 shrink-0"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <rect x="3" y="3" width="7" height="9" rx="1.5" />
+              <rect x="14" y="3" width="7" height="5" rx="1.5" />
+              <rect x="14" y="12" width="7" height="9" rx="1.5" />
+              <rect x="3" y="16" width="7" height="5" rx="1.5" />
+            </svg>
+            <span class="text-sm font-medium">Overview</span>
+          </button>
+
+          <button
+            data-tab="customers"
+            onclick="switchTab('customers')"
+            class="nav-link w-full flex items-center gap-3 px-3 py-2.5 rounded-lg border text-left"
+          >
+            <svg
+              class="w-4 h-4 shrink-0"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <circle cx="9" cy="8" r="3.2" />
+              <path d="M3.5 20a5.5 5.5 0 0 1 11 0" />
+              <path
+                d="M16.5 6.5a3.2 3.2 0 0 1 0 6.4M20 20a5.2 5.2 0 0 0-4.5-6.4"
+              />
+            </svg>
+            <span class="text-sm font-medium">Customers</span>
+          </button>
+
+          <button
+            data-tab="churn"
+            onclick="switchTab('churn')"
+            class="nav-link w-full flex items-center gap-3 px-3 py-2.5 rounded-lg border text-left"
+          >
+            <svg
+              class="w-4 h-4 shrink-0"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <circle cx="12" cy="12" r="8.5" />
+              <circle cx="12" cy="12" r="3.2" />
+              <path d="M12 3.5v2M12 18.5v2M3.5 12h2M18.5 12h2" />
+            </svg>
+            <span class="text-sm font-medium">Prediction</span>
+          </button>
+
+          <p
+            class="px-3 pt-5 pb-2 text-[11px] uppercase tracking-wider text-mist-300/70 font-medium"
+          >
+            Growth
+          </p>
+
+          <button
+            data-tab="campaigns"
+            onclick="switchTab('campaigns')"
+            class="nav-link w-full flex items-center gap-3 px-3 py-2.5 rounded-lg border text-left"
+          >
+            <svg
+              class="w-4 h-4 shrink-0"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path d="M4 4.5h13l3 4.5-3 4.5H4z" />
+              <path d="M4 13.5h9l0 6-9 0z" />
+            </svg>
+            <span class="text-sm font-medium">Campaigns</span>
+          </button>
+
+          <button
+            data-tab="calendar"
+            onclick="switchTab('calendar')"
+            class="nav-link w-full flex items-center gap-3 px-3 py-2.5 rounded-lg border text-left"
+          >
+            <svg
+              class="w-4 h-4 shrink-0"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <rect x="3.5" y="4.5" width="17" height="16" rx="2" />
+              <path d="M3.5 9.5h17M8 3v3M16 3v3" />
+            </svg>
+            <span class="text-sm font-medium">Calendar</span>
+          </button>
+
+          <p
+            class="px-3 pt-5 pb-2 text-[11px] uppercase tracking-wider text-mist-300/70 font-medium"
+          >
+            Assistant
+          </p>
+
+          <button
+            data-tab="copilot"
+            onclick="switchTab('copilot')"
+            class="nav-link nav-link-copilot w-full flex items-center gap-3 px-3 py-2.5 rounded-lg border text-left"
+          >
+            <span
+              class="w-2 h-2 rounded-full bg-copilot pulse-copilot shrink-0"
+            ></span>
+            <span class="text-sm font-medium">AI Copilot</span>
+            <span
+              class="ml-auto text-[9px] font-mono uppercase tracking-wide text-copilot border border-copilot/30 rounded px-1.5 py-0.5"
+              >New</span
+            >
+          </button>
+        </nav>
+      </aside>
+
+      <!-- ============================== MAIN ============================== -->
+      <main class="flex-1 min-w-0">
+        <header
+          class="sticky top-0 z-10 flex items-center justify-between gap-4 px-6 lg:px-10 h-16 border-b border-ink-600 bg-ink-950/80 backdrop-blur-md"
+        >
+          <div>
+            <h1
+              id="header-title"
+              class="font-display font-semibold text-lg text-mist-100"
+            >
+              Retention Overview
+            </h1>
+            <p id="header-subtitle" class="text-xs text-mist-300">
+              Live churn signals across your subscriber base
+            </p>
+          </div>
+          <div class="flex items-center gap-3">
+            <button
+              id="new-chat-btn"
+              onclick="resetCopilotChat()"
+              class="hidden items-center gap-1.5 text-xs font-medium text-mist-100 border border-ink-600 hover:border-copilot/50 hover:text-copilot rounded-full px-3 py-1.5 transition-colors"
+            >
+              <svg
+                class="w-3.5 h-3.5"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path d="M12 5v14M5 12h14" />
+              </svg>
+              New Chat
+            </button>
+
+            <span
+              class="hidden sm:flex items-center gap-1.5 text-xs text-mist-300 font-mono border border-ink-600 rounded-full px-3 py-1.5"
+            >
+              <span
+                class="w-1.5 h-1.5 rounded-full bg-signal pulse-copilot"
+              ></span>
+              Model live
+            </span>
+
+            <div class="relative">
+              <button
+                id="alerts-bell-btn"
+                onclick="toggleAlertsPanel()"
+                class="relative w-8 h-8 rounded-full border border-ink-600 hover:border-copilot/50 flex items-center justify-center text-mist-300 hover:text-mist-100 transition-colors"
+                aria-label="Alerts"
+              >
+                <svg
+                  class="w-4 h-4"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <path
+                    d="M6 9.5a6 6 0 0 1 12 0c0 4.2 1.2 5.8 1.8 6.5H4.2C4.8 15.3 6 13.7 6 9.5Z"
+                  />
+                  <path d="M10 19a2 2 0 0 0 4 0" />
+                </svg>
+                <span
+                  id="alerts-badge"
+                  class="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full bg-coral text-[9px] font-bold text-white flex items-center justify-center"
+                  >3</span
+                >
+              </button>
+
+              <div
+                id="alerts-panel"
+                class="hidden absolute right-0 mt-2 w-80 rounded-xl bg-ink-800 border border-ink-600 shadow-card overflow-hidden z-20"
+              >
+                <div
+                  class="flex items-center justify-between px-4 py-3 border-b border-ink-600"
+                >
+                  <p class="text-sm font-semibold text-mist-100">Alerts</p>
+                  <button
+                    onclick="markAllAlertsRead()"
+                    class="text-[11px] text-copilot hover:underline"
+                  >
+                    Mark all read
+                  </button>
+                </div>
+                <div
+                  id="alerts-list"
+                  class="max-h-80 overflow-y-auto thin-scroll divide-y divide-ink-600"
+                >
+                  <button
+                    onclick="switchTab('churn')"
+                    class="alert-item w-full text-left px-4 py-3 hover:bg-ink-700/60 transition-colors flex gap-2.5"
+                  >
+                    <span
+                      class="w-1.5 h-1.5 rounded-full bg-coral mt-1.5 shrink-0"
+                    ></span>
+                    <span>
+                      <span
+                        class="block text-xs font-medium text-mist-100"
+                        >Churn risk spike — VIP segment</span
+                      >
+                      <span class="block text-[11px] text-mist-300 mt-0.5"
+                        >Flagged accounts up 18% in the last 24h</span
+                      >
+                      <span
+                        class="block text-[10px] text-mist-300/70 mt-1 font-mono"
+                        >2h ago</span
+                      >
+                    </span>
+                  </button>
+                  <button
+                    onclick="switchTab('copilot')"
+                    class="alert-item w-full text-left px-4 py-3 hover:bg-ink-700/60 transition-colors flex gap-2.5"
+                  >
+                    <span
+                      class="w-1.5 h-1.5 rounded-full bg-amber mt-1.5 shrink-0"
+                    ></span>
+                    <span>
+                      <span
+                        class="block text-xs font-medium text-mist-100"
+                        >Low-Usage Nudge underperforming</span
+                      >
+                      <span class="block text-[11px] text-mist-300 mt-0.5"
+                        >Open rate 11%, below your 25% target</span
+                      >
+                      <span
+                        class="block text-[10px] text-mist-300/70 mt-1 font-mono"
+                        >5h ago</span
+                      >
+                    </span>
+                  </button>
+                  <button
+                    onclick="switchTab('copilot')"
+                    class="alert-item w-full text-left px-4 py-3 hover:bg-ink-700/60 transition-colors flex gap-2.5"
+                  >
+                    <span
+                      class="w-1.5 h-1.5 rounded-full bg-copilot mt-1.5 shrink-0"
+                    ></span>
+                    <span>
+                      <span
+                        class="block text-xs font-medium text-mist-100"
+                        >Budget 80% spent</span
+                      >
+                      <span class="block text-[11px] text-mist-300 mt-0.5"
+                        >VIP Loyalty Boost has used RM 3,360 of RM
+                        4,200</span
+                      >
+                      <span
+                        class="block text-[10px] text-mist-300/70 mt-1 font-mono"
+                        >1d ago</span
+                      >
+                    </span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div
+              class="w-8 h-8 rounded-full bg-ink-700 border border-ink-600 flex items-center justify-center text-xs font-semibold text-mist-100"
+            >
+              A
+            </div>
+          </div>
+        </header>
+
+        <div class="px-6 lg:px-10 py-8">
+          <!-- ======================================================= OVERVIEW ======================================================= -->
+          <section id="panel-overview" class="tab-panel space-y-8">
+            <!-- Row 1 — AI Copilot flagged banner (full width) -->
+            <div
+              class="rounded-xl bg-copilot/[0.06] border border-copilot/25 shadow-card p-5 flex items-start gap-4"
+            >
+              <span
+                class="w-9 h-9 rounded-full bg-copilot/15 border border-copilot/30 flex items-center justify-center shrink-0"
+              >
+                <svg
+                  class="w-4 h-4 text-copilot"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <path
+                    d="M12 3v3M12 18v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M3 12h3M18 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"
+                  />
+                  <circle cx="12" cy="12" r="3.2" />
+                </svg>
+              </span>
+              <div class="flex-1">
+                <p class="text-sm text-mist-100 leading-relaxed">
+                  <span class="font-semibold text-copilot"
+                    >AI Copilot flagged something:</span
+                  >
+                  customers with daily usage under 15 mins and an unresolved
+                  ticket are driving 40% of the RM 250,000 revenue at risk. Ask
+                  the copilot for a rescue plan.
+                </p>
+              </div>
+              <button
+                onclick="switchTab('copilot')"
+                class="shrink-0 text-xs font-semibold text-ink-950 bg-copilot hover:bg-copilot/90 rounded-lg px-3.5 py-2 transition-colors"
+              >
+                Open Copilot
+              </button>
+            </div>
+
+            <!-- Row 2 — 4 KPI cards -->
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              <div
+                class="kpi-clickable rounded-xl bg-ink-800 border border-ink-600 shadow-card p-4"
+                onclick="openChartModal('customers')"
+                role="button"
+                tabindex="0"
+                aria-label="View customer base breakdown"
+              >
+                <p class="text-[11px] uppercase tracking-wide text-mist-300">
+                  Total Customers
+                </p>
+                <p
+                  class="font-display text-2xl font-semibold mt-2 tabular-nums"
+                  data-count="50000"
+                >
+                  0
+                </p>
+                <p
+                  class="text-[11px] text-mist-300 mt-1 flex items-center gap-1"
+                >
+                  Full subscriber base
+                  <span class="text-copilot">· breakdown →</span>
+                </p>
+                <span class="kpi-delta up">▲ 4.2% vs last month</span>
+              </div>
+
+              <div
+                class="kpi-clickable rounded-xl bg-ink-800 border border-coral/30 shadow-card p-4 relative overflow-hidden"
+                onclick="openChartModal('churn')"
+                role="button"
+                tabindex="0"
+                aria-label="View churn rate trend"
+              >
+                <div class="absolute inset-x-0 top-0 h-0.5 bg-coral/60"></div>
+                <p class="text-[11px] uppercase tracking-wide text-mist-300">
+                  Churn Rate
+                </p>
+                <p
+                  class="font-display text-2xl font-semibold mt-2 tabular-nums text-coral"
+                  data-count="6"
+                  data-suffix="%"
+                >
+                  0
+                </p>
+                <p
+                  class="text-[11px] text-mist-300 mt-1 flex items-center gap-1"
+                >
+                  3,200 accounts flagged
+                  <span class="text-copilot">· trend →</span>
+                </p>
+                <span class="kpi-delta down">▼ 1.3% vs last month</span>
+              </div>
+
+              <div
+                class="rounded-xl bg-ink-800 border border-amber/30 shadow-card p-4 relative overflow-hidden"
+              >
+                <div class="absolute inset-x-0 top-0 h-0.5 bg-amber/60"></div>
+                <p class="text-[11px] uppercase tracking-wide text-mist-300">
+                  Revenue at Risk
+                </p>
+                <p
+                  class="font-display text-2xl font-semibold mt-2 tabular-nums text-amber"
+                >
+                  RM <span data-count="250000">0</span>
+                </p>
+                <p class="text-[11px] text-mist-300 mt-1">
+                  Projected 90-day loss
+                </p>
+                <span class="kpi-delta down">▼ 5.8% vs last month</span>
+              </div>
+
+              <div
+                class="rounded-xl bg-ink-800 border border-copilot/30 shadow-card p-4 relative overflow-hidden cursor-pointer kpi-clickable"
+                onclick="switchTab('campaigns')"
+              >
+                <div class="absolute inset-x-0 top-0 h-0.5 bg-copilot/60"></div>
+                <p class="text-[11px] uppercase tracking-wide text-mist-300">
+                  Active Campaigns
+                </p>
+                <p
+                  class="font-display text-2xl font-semibold mt-2 tabular-nums text-copilot"
+                  data-count="3"
+                >
+                  0
+                </p>
+                <p
+                  class="text-[11px] text-mist-300 mt-1 flex items-center gap-1"
+                >
+                  Running or scheduled
+                  <span class="text-copilot">· view all →</span>
+                </p>
+                <span class="kpi-delta up">▲ 6.0% vs last month</span>
+              </div>
+            </div>
+
+            <!-- Row 3 — Churn rate trend + Segment distribution -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div
+                class="rounded-xl bg-ink-800 border border-ink-600 shadow-card p-5"
+              >
+                <h2 class="font-display font-semibold text-mist-100 text-sm">
+                  Churn rate trend
+                </h2>
+                <p class="text-xs text-mist-300 mt-0.5 mb-4">
+                  Weekly churn rate, last 12 weeks
+                </p>
+                <div class="h-64">
+                  <canvas id="overview-trend-chart"></canvas>
+                </div>
+              </div>
+              <div
+                class="rounded-xl bg-ink-800 border border-ink-600 shadow-card p-5"
+              >
+                <h2 class="font-display font-semibold text-mist-100 text-sm">
+                  Segment distribution
+                </h2>
+                <p class="text-xs text-mist-300 mt-0.5 mb-4">
+                  VIP, Loyal, Churn risk &amp; Potential customers
+                </p>
+                <div class="h-64">
+                  <canvas id="overview-segment-chart"></canvas>
+                </div>
+              </div>
+            </div>
+
+            <div
+              class="rounded-xl bg-ink-800 border border-ink-600 shadow-card overflow-hidden"
+            >
+              <div
+                class="flex items-center justify-between px-5 py-4 border-b border-ink-600"
+              >
+                <div>
+                  <h2 class="font-display font-semibold text-mist-100">
+                    Top Churn Risks
+                  </h2>
+                  <p class="text-xs text-mist-300 mt-0.5">
+                    Highest-probability accounts, ranked by the churn model
+                  </p>
+                </div>
+                <button
+                  onclick="switchTab('churn')"
+                  class="text-[11px] font-mono text-copilot border border-copilot/30 rounded-full px-3 py-1.5 hover:bg-copilot/10 transition-colors"
+                >
+                  View all 3,200 →
+                </button>
+              </div>
+              <div class="overflow-x-auto thin-scroll">
+                <table class="w-full text-sm">
+                  <thead>
+                    <tr
+                      class="text-left text-[11px] uppercase tracking-wide text-mist-300 border-b border-ink-600"
+                    >
+                      <th class="px-5 py-3 font-medium">Customer Name</th>
+                      <th class="px-4 py-3 font-medium">Segment</th>
+                      <th class="px-4 py-3 font-medium">Last Support Ticket</th>
+                      <th class="px-5 py-3 font-medium text-right">
+                        AI Churn Probability
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-ink-600 font-mono text-[13px]">
+                    <tr>
+                      <td class="px-5 py-3.5 font-body">
+                        <div class="flex items-center gap-2.5">
+                          <span
+                            class="w-7 h-7 rounded-full bg-ink-700 flex items-center justify-center text-[11px] font-semibold text-mist-100 shrink-0"
+                            >PN</span
+                          >Priya Nair
+                        </div>
+                      </td>
+                      <td class="px-4 py-3.5">
+                        <span class="badge bg-coral/15 text-coral"
+                          >Churn Risk</span
+                        >
+                      </td>
+                      <td class="px-4 py-3.5">
+                        <span class="text-coral">Open</span>
+                        <span class="text-mist-300">· 2d ago</span>
+                      </td>
+                      <td class="px-5 py-3.5 text-right">
+                        <span
+                          class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-coral/15 text-coral font-semibold"
+                          >92%</span
+                        >
+                      </td>
+                    </tr>
+                    <tr>
+                      <td class="px-5 py-3.5 font-body">
+                        <div class="flex items-center gap-2.5">
+                          <span
+                            class="w-7 h-7 rounded-full bg-ink-700 flex items-center justify-center text-[11px] font-semibold text-mist-100 shrink-0"
+                            >AZ</span
+                          >Amirah Zulkifli
+                        </div>
+                      </td>
+                      <td class="px-4 py-3.5">
+                        <span class="badge bg-coral/15 text-coral"
+                          >Churn Risk</span
+                        >
+                      </td>
+                      <td class="px-4 py-3.5">
+                        <span class="text-coral">Open</span>
+                        <span class="text-mist-300">· 5d ago</span>
+                      </td>
+                      <td class="px-5 py-3.5 text-right">
+                        <span
+                          class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-coral/15 text-coral font-semibold"
+                          >89%</span
+                        >
+                      </td>
+                    </tr>
+                    <tr>
+                      <td class="px-5 py-3.5 font-body">
+                        <div class="flex items-center gap-2.5">
+                          <span
+                            class="w-7 h-7 rounded-full bg-ink-700 flex items-center justify-center text-[11px] font-semibold text-mist-100 shrink-0"
+                            >CW</span
+                          >Chen Wei Ling
+                        </div>
+                      </td>
+                      <td class="px-4 py-3.5">
+                        <span class="badge bg-coral/15 text-coral"
+                          >Churn Risk</span
+                        >
+                      </td>
+                      <td class="px-4 py-3.5">
+                        <span class="text-coral">Open</span>
+                        <span class="text-mist-300">· 12d ago</span>
+                      </td>
+                      <td class="px-5 py-3.5 text-right">
+                        <span
+                          class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-coral/15 text-coral font-semibold"
+                          >81%</span
+                        >
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </section>
+
+          <!-- ======================================================= CUSTOMERS (SEGMENTATION) ======================================================= -->
+          <section id="panel-customers" class="tab-panel hidden space-y-6">
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              <div
+                class="rounded-xl bg-ink-800 border border-amber/30 shadow-card p-4"
+              >
+                <p class="badge bg-amber/15 text-amber mb-2">VIP Customers</p>
+                <p class="font-display text-2xl font-semibold tabular-nums">
+                  3,850
+                </p>
+                <p class="text-[11px] text-mist-300 mt-1">
+                  Top 10% by lifetime value · avg CLV RM 4,120
+                </p>
+              </div>
+              <div
+                class="rounded-xl bg-ink-800 border border-signal/30 shadow-card p-4"
+              >
+                <p class="badge bg-signal/15 text-signal mb-2">
+                  Loyal Customers
+                </p>
+                <p class="font-display text-2xl font-semibold tabular-nums">
+                  15,400
+                </p>
+                <p class="text-[11px] text-mist-300 mt-1">
+                  12+ months tenure, consistent usage
+                </p>
+              </div>
+              <div
+                class="rounded-xl bg-ink-800 border border-ink-500 shadow-card p-4"
+              >
+                <p class="badge bg-ink-700 text-mist-100 mb-2">
+                  Potential Customers
+                </p>
+                <p class="font-display text-2xl font-semibold tabular-nums">
+                  11,550
+                </p>
+                <p class="text-[11px] text-mist-300 mt-1">
+                  Trial / new users showing upgrade signals
+                </p>
+              </div>
+              <div
+                class="rounded-xl bg-ink-800 border border-coral/30 shadow-card p-4"
+              >
+                <p class="badge bg-coral/15 text-coral mb-2">
+                  Churn Risk Customers
+                </p>
+                <p class="font-display text-2xl font-semibold tabular-nums">
+                  3,200
+                </p>
+                <p class="text-[11px] text-mist-300 mt-1">
+                  Flagged by the churn model this cycle
+                </p>
+              </div>
+            </div>
+
+            <div
+              class="rounded-xl bg-ink-800 border border-ink-600 shadow-card overflow-hidden"
+            >
+              <div
+                class="flex items-center justify-between px-5 py-4 border-b border-ink-600"
+              >
+                <div>
+                  <h2 class="font-display font-semibold text-mist-100">
+                    Customer Directory
+                  </h2>
+                  <p class="text-xs text-mist-300 mt-0.5">
+                    Auto-classified by behaviour, purchase history, demographics
+                    &amp; engagement
+                  </p>
+                </div>
+                <span
+                  class="text-[11px] font-mono text-mist-300 border border-ink-600 rounded-full px-2.5 py-1"
+                  >10 of 50,000 shown</span
+                >
+              </div>
+              <div class="overflow-x-auto thin-scroll">
+                <table class="w-full text-sm">
+                  <thead>
+                    <tr
+                      class="text-left text-[11px] uppercase tracking-wide text-mist-300 border-b border-ink-600"
+                    >
+                      <th class="px-5 py-3 font-medium">Customer Name</th>
+                      <th class="px-4 py-3 font-medium">Segment</th>
+                      <th class="px-4 py-3 font-medium">Lifetime Value</th>
+                      <th class="px-4 py-3 font-medium">Last Active</th>
+                      <th class="px-5 py-3 font-medium">Plan Tier</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-ink-600 font-mono text-[13px]">
+                    <tr>
+                      <td class="px-5 py-3.5 font-body">
+                        <div class="flex items-center gap-2.5">
+                          <span
+                            class="w-7 h-7 rounded-full bg-ink-700 flex items-center justify-center text-[11px] font-semibold text-mist-100 shrink-0"
+                            >KL</span
+                          >Kevin Lee
+                        </div>
+                      </td>
+                      <td class="px-4 py-3.5">
+                        <span class="badge bg-ink-700 text-mist-100"
+                          >Potential</span
+                        >
+                      </td>
+                      <td class="px-4 py-3.5 text-mist-300">RM 467</td>
+                      <td class="px-4 py-3.5 text-mist-300">21d ago</td>
+                      <td class="px-5 py-3.5">
+                        <span class="badge bg-copilot/15 text-copilot"
+                          >Premium</span
+                        >
+                      </td>
+                    </tr>
+                    <tr>
+                      <td class="px-5 py-3.5 font-body">
+                        <div class="flex items-center gap-2.5">
+                          <span
+                            class="w-7 h-7 rounded-full bg-ink-700 flex items-center justify-center text-[11px] font-semibold text-mist-100 shrink-0"
+                            >WL</span
+                          >Wei Liang
+                        </div>
+                      </td>
+                      <td class="px-4 py-3.5">
+                        <span class="badge bg-ink-700 text-mist-100"
+                          >Potential</span
+                        >
+                      </td>
+                      <td class="px-4 py-3.5 text-mist-300">RM 6,264</td>
+                      <td class="px-4 py-3.5 text-mist-300">8d ago</td>
+                      <td class="px-5 py-3.5">
+                        <span class="badge bg-ink-600 text-mist-300"
+                          >Free</span
+                        >
+                      </td>
+                    </tr>
+                    <tr>
+                      <td class="px-5 py-3.5 font-body">
+                        <div class="flex items-center gap-2.5">
+                          <span
+                            class="w-7 h-7 rounded-full bg-ink-700 flex items-center justify-center text-[11px] font-semibold text-mist-100 shrink-0"
+                            >MT</span
+                          >Marcus Tan
+                        </div>
+                      </td>
+                      <td class="px-4 py-3.5">
+                        <span class="badge bg-signal/15 text-signal"
+                          >Loyal</span
+                        >
+                      </td>
+                      <td class="px-4 py-3.5 text-mist-300">RM 6,129</td>
+                      <td class="px-4 py-3.5 text-mist-300">37d ago</td>
+                      <td class="px-5 py-3.5">
+                        <span class="badge bg-ink-700 text-mist-100"
+                          >Standard</span
+                        >
+                      </td>
+                    </tr>
+                    <tr>
+                      <td class="px-5 py-3.5 font-body">
+                        <div class="flex items-center gap-2.5">
+                          <span
+                            class="w-7 h-7 rounded-full bg-ink-700 flex items-center justify-center text-[11px] font-semibold text-mist-100 shrink-0"
+                            >AR</span
+                          >Aisyah R.
+                        </div>
+                      </td>
+                      <td class="px-4 py-3.5">
+                        <span class="badge bg-amber/15 text-amber">VIP</span>
+                      </td>
+                      <td class="px-4 py-3.5 text-mist-300">RM 5,906</td>
+                      <td class="px-4 py-3.5 text-mist-300">7d ago</td>
+                      <td class="px-5 py-3.5">
+                        <span class="badge bg-ink-600 text-mist-300"
+                          >Free</span
+                        >
+                      </td>
+                    </tr>
+                    <tr>
+                      <td class="px-5 py-3.5 font-body">
+                        <div class="flex items-center gap-2.5">
+                          <span
+                            class="w-7 h-7 rounded-full bg-ink-700 flex items-center justify-center text-[11px] font-semibold text-mist-100 shrink-0"
+                            >FZ</span
+                          >Farah Z.
+                        </div>
+                      </td>
+                      <td class="px-4 py-3.5">
+                        <span class="badge bg-amber/15 text-amber">VIP</span>
+                      </td>
+                      <td class="px-4 py-3.5 text-mist-300">RM 3,494</td>
+                      <td class="px-4 py-3.5 text-mist-300">31d ago</td>
+                      <td class="px-5 py-3.5">
+                        <span class="badge bg-ink-700 text-mist-100"
+                          >Standard</span
+                        >
+                      </td>
+                    </tr>
+                    <tr>
+                      <td class="px-5 py-3.5 font-body">
+                        <div class="flex items-center gap-2.5">
+                          <span
+                            class="w-7 h-7 rounded-full bg-ink-700 flex items-center justify-center text-[11px] font-semibold text-mist-100 shrink-0"
+                            >DO</span
+                          >Daniel Ong
+                        </div>
+                      </td>
+                      <td class="px-4 py-3.5">
+                        <span class="badge bg-signal/15 text-signal"
+                          >Loyal</span
+                        >
+                      </td>
+                      <td class="px-4 py-3.5 text-mist-300">RM 3,734</td>
+                      <td class="px-4 py-3.5 text-mist-300">26d ago</td>
+                      <td class="px-5 py-3.5">
+                        <span class="badge bg-copilot/15 text-copilot"
+                          >Premium</span
+                        >
+                      </td>
+                    </tr>
+                    <tr class="row-flagged">
+                      <td class="px-5 py-3.5 font-body">
+                        <div class="flex items-center gap-2.5">
+                          <span
+                            class="w-7 h-7 rounded-full bg-ink-700 flex items-center justify-center text-[11px] font-semibold text-mist-100 shrink-0"
+                            >NA</span
+                          >Nur Aina
+                        </div>
+                      </td>
+                      <td class="px-4 py-3.5">
+                        <span class="badge bg-coral/15 text-coral"
+                          >Churn Risk</span
+                        >
+                      </td>
+                      <td class="px-4 py-3.5 text-mist-300">RM 6,625</td>
+                      <td class="px-4 py-3.5 text-mist-300">19d ago</td>
+                      <td class="px-5 py-3.5">
+                        <span class="badge bg-copilot/15 text-copilot"
+                          >Premium</span
+                        >
+                      </td>
+                    </tr>
+                    <tr>
+                      <td class="px-5 py-3.5 font-body">
+                        <div class="flex items-center gap-2.5">
+                          <span
+                            class="w-7 h-7 rounded-full bg-ink-700 flex items-center justify-center text-[11px] font-semibold text-mist-100 shrink-0"
+                            >RG</span
+                          >Ryan Goh
+                        </div>
+                      </td>
+                      <td class="px-4 py-3.5">
+                        <span class="badge bg-signal/15 text-signal"
+                          >Loyal</span
+                        >
+                      </td>
+                      <td class="px-4 py-3.5 text-mist-300">RM 4,227</td>
+                      <td class="px-4 py-3.5 text-mist-300">8d ago</td>
+                      <td class="px-5 py-3.5">
+                        <span class="badge bg-copilot/15 text-copilot"
+                          >Premium</span
+                        >
+                      </td>
+                    </tr>
+                    <tr>
+                      <td class="px-5 py-3.5 font-body">
+                        <div class="flex items-center gap-2.5">
+                          <span
+                            class="w-7 h-7 rounded-full bg-ink-700 flex items-center justify-center text-[11px] font-semibold text-mist-100 shrink-0"
+                            >SH</span
+                          >Sofia H.
+                        </div>
+                      </td>
+                      <td class="px-4 py-3.5">
+                        <span class="badge bg-amber/15 text-amber">VIP</span>
+                      </td>
+                      <td class="px-4 py-3.5 text-mist-300">RM 6,207</td>
+                      <td class="px-4 py-3.5 text-mist-300">11d ago</td>
+                      <td class="px-5 py-3.5">
+                        <span class="badge bg-ink-600 text-mist-300"
+                          >Free</span
+                        >
+                      </td>
+                    </tr>
+                    <tr class="row-flagged">
+                      <td class="px-5 py-3.5 font-body">
+                        <div class="flex items-center gap-2.5">
+                          <span
+                            class="w-7 h-7 rounded-full bg-ink-700 flex items-center justify-center text-[11px] font-semibold text-mist-100 shrink-0"
+                            >PK</span
+                          >Priya K.
+                        </div>
+                      </td>
+                      <td class="px-4 py-3.5">
+                        <span class="badge bg-coral/15 text-coral"
+                          >Churn Risk</span
+                        >
+                      </td>
+                      <td class="px-4 py-3.5 text-mist-300">RM 3,131</td>
+                      <td class="px-4 py-3.5 text-mist-300">35d ago</td>
+                      <td class="px-5 py-3.5">
+                        <span class="badge bg-copilot/15 text-copilot"
+                          >Premium</span
+                        >
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </section>
+
+          <!-- ======================================================= PREDICTION (Churn Risk / CLV) ======================================================= -->
+          <section id="panel-churn" class="tab-panel hidden space-y-6">
+            <div class="inline-flex items-center gap-1 rounded-full bg-ink-800 border border-ink-600 p-1">
+              <button
+                data-sub="churn"
+                onclick="switchPredictionTab('churn')"
+                class="prediction-tab-btn prediction-tab-active text-xs font-semibold rounded-full px-4 py-1.5 transition-colors"
+              >
+                Churn Risk
+              </button>
+              <button
+                data-sub="clv"
+                onclick="switchPredictionTab('clv')"
+                class="prediction-tab-btn text-xs font-semibold rounded-full px-4 py-1.5 transition-colors"
+              >
+                Customer Lifetime Value
+              </button>
+            </div>
+
+            <!-- ============================ SUB-TAB: CHURN RISK ============================ -->
+            <div id="prediction-sub-churn" class="prediction-subpanel space-y-6">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+              <div
+                class="lg:col-span-2 rounded-xl bg-ink-800 border border-ink-600 shadow-card overflow-hidden"
+              >
+                <div
+                  class="flex items-center justify-between px-5 py-4 border-b border-ink-600"
+                >
+                  <div>
+                    <h2 class="font-display font-semibold text-mist-100">
+                      Customer Risk Table
+                    </h2>
+                    <p class="text-xs text-mist-300 mt-0.5">
+                      Row-level output of the churn model, ranked by AI Churn
+                      Probability
+                    </p>
+                  </div>
+                  <span
+                    class="text-[11px] font-mono text-mist-300 border border-ink-600 rounded-full px-2.5 py-1"
+                    >5 of 3,200 shown</span
+                  >
+                </div>
+                <div
+                  class="flex flex-wrap items-center gap-2 px-5 py-3 border-b border-ink-600 bg-ink-900/40"
+                >
+                  <select
+                    id="churn-filter-probability"
+                    onchange="filterRiskTable()"
+                    class="rounded-lg bg-ink-900 border border-ink-600 focus:border-copilot/60 focus:outline-none text-xs text-mist-100 px-2.5 py-2"
+                  >
+                    <option value="all">AI Churn Probability: All</option>
+                    <option value="high">High (&gt;80%)</option>
+                    <option value="medium">Medium (50–80%)</option>
+                    <option value="low">Low (&lt;50%)</option>
+                  </select>
+                  <select
+                    id="churn-filter-reason"
+                    onchange="filterRiskTable()"
+                    class="rounded-lg bg-ink-900 border border-ink-600 focus:border-copilot/60 focus:outline-none text-xs text-mist-100 px-2.5 py-2"
+                  >
+                    <option value="all">Risk Factor: All</option>
+                    <option value="ticket">Unresolved support ticket</option>
+                    <option value="usage">Low daily usage</option>
+                    <option value="login">Login frequency drop</option>
+                    <option value="stable">Stable / low risk</option>
+                  </select>
+                  <select
+                    id="churn-filter-ticket"
+                    onchange="filterRiskTable()"
+                    class="rounded-lg bg-ink-900 border border-ink-600 focus:border-copilot/60 focus:outline-none text-xs text-mist-100 px-2.5 py-2"
+                  >
+                    <option value="all">Support Ticket: All</option>
+                    <option value="open">Open</option>
+                    <option value="resolved">Resolved</option>
+                  </select>
+                  <button
+                    onclick="resetRiskFilters()"
+                    class="text-[11px] text-mist-300 hover:text-mist-100 underline underline-offset-2 ml-auto"
+                  >
+                    Reset filters
+                  </button>
+                </div>
+                <div class="overflow-x-auto thin-scroll">
+                  <table class="w-full text-sm" id="risk-table">
+                    <thead>
+                      <tr
+                        class="text-left text-[11px] uppercase tracking-wide text-mist-300 border-b border-ink-600"
+                      >
+                        <th class="px-5 py-3 font-medium">Customer Name</th>
+                        <th class="px-4 py-3 font-medium">
+                          Account Age (Days)
+                        </th>
+                        <th class="px-4 py-3 font-medium">Login Frequency</th>
+                        <th class="px-4 py-3 font-medium">
+                          Daily Usage (Mins)
+                        </th>
+                        <th class="px-4 py-3 font-medium">
+                          Last Support Ticket
+                        </th>
+                        <th class="px-5 py-3 font-medium text-right">
+                          AI Churn Probability
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody
+                      class="divide-y divide-ink-600 font-mono text-[13px]"
+                    >
+                      <tr
+                        class="risk-row transition-colors"
+                        data-flag="true"
+                        data-risk="high"
+                        data-reason="ticket"
+                        data-ticket="open"
+                        onclick="openExplainDrawer('Amirah Zulkifli')"
+                      >
+                        <td class="px-5 py-3.5 font-body">
+                          <div class="flex items-center gap-2.5">
+                            <span
+                              class="w-7 h-7 rounded-full bg-ink-700 flex items-center justify-center text-[11px] font-semibold text-mist-100 shrink-0"
+                              >AZ</span
+                            >Amirah Zulkifli
+                          </div>
+                        </td>
+                        <td class="px-4 py-3.5 text-mist-300">412</td>
+                        <td class="px-4 py-3.5 text-mist-300">2 / week</td>
+                        <td class="px-4 py-3.5 text-coral">8</td>
+                        <td class="px-4 py-3.5">
+                          <span class="text-coral">Open</span>
+                          <span class="text-mist-300">· 5d ago</span>
+                        </td>
+                        <td class="px-5 py-3.5 text-right">
+                          <span
+                            class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-coral/15 text-coral font-semibold"
+                            >89%</span
+                          >
+                        </td>
+                      </tr>
+                      <tr
+                        class="risk-row transition-colors"
+                        data-risk="low"
+                        data-reason="stable"
+                        data-ticket="resolved"
+                        onclick="openExplainDrawer('Ridzuan Hashim')"
+                      >
+                        <td class="px-5 py-3.5 font-body">
+                          <div class="flex items-center gap-2.5">
+                            <span
+                              class="w-7 h-7 rounded-full bg-ink-700 flex items-center justify-center text-[11px] font-semibold text-mist-100 shrink-0"
+                              >RH</span
+                            >Ridzuan Hashim
+                          </div>
+                        </td>
+                        <td class="px-4 py-3.5 text-mist-300">128</td>
+                        <td class="px-4 py-3.5 text-mist-300">5 / week</td>
+                        <td class="px-4 py-3.5 text-signal">34</td>
+                        <td class="px-4 py-3.5">
+                          <span class="text-mist-300">Resolved · 40d ago</span>
+                        </td>
+                        <td class="px-5 py-3.5 text-right">
+                          <span
+                            class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-signal/15 text-signal font-semibold"
+                            >22%</span
+                          >
+                        </td>
+                      </tr>
+                      <tr
+                        class="risk-row transition-colors"
+                        data-flag="true"
+                        data-risk="high"
+                        data-reason="ticket"
+                        data-ticket="open"
+                        onclick="openExplainDrawer('Priya Nair')"
+                      >
+                        <td class="px-5 py-3.5 font-body">
+                          <div class="flex items-center gap-2.5">
+                            <span
+                              class="w-7 h-7 rounded-full bg-ink-700 flex items-center justify-center text-[11px] font-semibold text-mist-100 shrink-0"
+                              >PN</span
+                            >Priya Nair
+                          </div>
+                        </td>
+                        <td class="px-4 py-3.5 text-mist-300">730</td>
+                        <td class="px-4 py-3.5 text-mist-300">1 / week</td>
+                        <td class="px-4 py-3.5 text-coral">5</td>
+                        <td class="px-4 py-3.5">
+                          <span class="text-coral">Open</span>
+                          <span class="text-mist-300">· 2d ago</span>
+                        </td>
+                        <td class="px-5 py-3.5 text-right">
+                          <span
+                            class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-coral/15 text-coral font-semibold"
+                            >92%</span
+                          >
+                        </td>
+                      </tr>
+                      <tr
+                        class="risk-row transition-colors"
+                        data-flag="true"
+                        data-risk="high"
+                        data-reason="ticket"
+                        data-ticket="open"
+                        onclick="openExplainDrawer('Chen Wei Ling')"
+                      >
+                        <td class="px-5 py-3.5 font-body">
+                          <div class="flex items-center gap-2.5">
+                            <span
+                              class="w-7 h-7 rounded-full bg-ink-700 flex items-center justify-center text-[11px] font-semibold text-mist-100 shrink-0"
+                              >CW</span
+                            >Chen Wei Ling
+                          </div>
+                        </td>
+                        <td class="px-4 py-3.5 text-mist-300">205</td>
+                        <td class="px-4 py-3.5 text-mist-300">3 / week</td>
+                        <td class="px-4 py-3.5 text-coral">12</td>
+                        <td class="px-4 py-3.5">
+                          <span class="text-coral">Open</span>
+                          <span class="text-mist-300">· 12d ago</span>
+                        </td>
+                        <td class="px-5 py-3.5 text-right">
+                          <span
+                            class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-coral/15 text-coral font-semibold"
+                            >81%</span
+                          >
+                        </td>
+                      </tr>
+                      <tr
+                        class="risk-row transition-colors"
+                        data-risk="medium"
+                        data-reason="usage"
+                        data-ticket="resolved"
+                        onclick="openExplainDrawer('Farah Aziz')"
+                      >
+                        <td class="px-5 py-3.5 font-body">
+                          <div class="flex items-center gap-2.5">
+                            <span
+                              class="w-7 h-7 rounded-full bg-ink-700 flex items-center justify-center text-[11px] font-semibold text-mist-100 shrink-0"
+                              >FA</span
+                            >Farah Aziz
+                          </div>
+                        </td>
+                        <td class="px-4 py-3.5 text-mist-300">365</td>
+                        <td class="px-4 py-3.5 text-mist-300">4 / week</td>
+                        <td class="px-4 py-3.5 text-amber">45</td>
+                        <td class="px-4 py-3.5">
+                          <span class="text-mist-300">Resolved · 90d ago</span>
+                        </td>
+                        <td class="px-5 py-3.5 text-right">
+                          <span
+                            class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber/15 text-amber font-semibold"
+                            >63%</span
+                          >
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                  <p
+                    id="risk-table-empty-state"
+                    class="hidden text-center text-xs text-mist-300 py-8"
+                  >
+                    No customers match the selected filters.
+                  </p>
+                </div>
+                <div
+                  class="px-5 py-3 border-t border-ink-600 flex items-center gap-4 text-[11px] text-mist-300"
+                >
+                  <span class="flex items-center gap-1.5"
+                    ><span class="w-2 h-2 rounded-full bg-coral"></span>High
+                    risk · &gt;80%</span
+                  >
+                  <span class="flex items-center gap-1.5"
+                    ><span class="w-2 h-2 rounded-full bg-amber"></span>Medium
+                    risk · 50–80%</span
+                  >
+                  <span class="flex items-center gap-1.5"
+                    ><span class="w-2 h-2 rounded-full bg-signal"></span>Low
+                    risk · &lt;50%</span
+                  >
+                </div>
+              </div>
+
+              <div
+                class="rounded-xl bg-ink-800 border border-ink-600 shadow-card p-5"
+              >
+                <h2 class="font-display font-semibold text-mist-100 text-sm">
+                  Why customers churn
+                </h2>
+                <p class="text-xs text-mist-300 mt-0.5 mb-4">
+                  Feature importance behind the model's predictions
+                </p>
+                <div class="h-56">
+                  <canvas id="feature-importance-chart"></canvas>
+                </div>
+                <p class="text-[11px] text-mist-300 mt-3 font-mono">
+                  Source: churn model · SHAP-style importance, last retrain 6h
+                  ago
+                </p>
+              </div>
+            </div>
+            </div>
+            <!-- ============================ /SUB-TAB: CHURN RISK ============================ -->
+
+            <!-- ============================ SUB-TAB: CUSTOMER LIFETIME VALUE ============================ -->
+            <div id="prediction-sub-clv" class="prediction-subpanel hidden space-y-6">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+              <div
+                class="lg:col-span-2 rounded-xl bg-ink-800 border border-ink-600 shadow-card overflow-hidden"
+              >
+                <div
+                  class="flex items-center justify-between px-5 py-4 border-b border-ink-600"
+                >
+                  <div>
+                    <h2 class="font-display font-semibold text-mist-100">
+                      Priority retention list
+                    </h2>
+                    <p class="text-xs text-mist-300 mt-0.5">
+                      Predicted 12-month revenue per customer, to prioritise
+                      retention spend
+                    </p>
+                  </div>
+                  <button
+                    id="export-clv-btn"
+                    onclick="exportClvPriorityList()"
+                    class="text-[11px] font-mono text-copilot border border-copilot/30 rounded-full px-3 py-1.5 hover:bg-copilot/10 transition-colors"
+                  >
+                    Export priority list
+                  </button>
+                </div>
+                <div
+                  class="flex flex-wrap items-center gap-2 px-5 py-3 border-b border-ink-600 bg-ink-900/40"
+                >
+                  <select
+                    id="clv-sort-select"
+                    class="rounded-lg bg-ink-900 border border-ink-600 focus:border-copilot/60 focus:outline-none text-xs text-mist-100 px-2.5 py-2"
+                  >
+                    <option value="priority-desc">Sort: Priority (High → Low)</option>
+                    <option value="ltv-desc">Sort: Predicted LTV (High → Low)</option>
+                    <option value="growth-desc">Sort: Growth (High → Low)</option>
+                  </select>
+                  <label
+                    class="flex items-center gap-1.5 text-xs text-amber cursor-pointer select-none"
+                  >
+                    <input
+                      type="checkbox"
+                      id="clv-flagged-toggle"
+                      onchange="toggleFlaggedAccounts()"
+                      class="accent-amber w-3.5 h-3.5"
+                    />
+                    ⚠ Flagged accounts only
+                  </label>
+                </div>
+                <div class="overflow-x-auto thin-scroll" style="max-height: 26rem">
+                  <table class="w-full text-sm" id="clv-priority-table">
+                    <thead>
+                      <tr
+                        class="text-left text-[11px] uppercase tracking-wide text-mist-300 border-b border-ink-600"
+                      >
+                        <th class="px-5 py-3 font-medium">Customer</th>
+                        <th class="px-4 py-3 font-medium">Current Value</th>
+                        <th class="px-4 py-3 font-medium">Predicted 12mo LTV</th>
+                        <th class="px-4 py-3 font-medium">Growth</th>
+                        <th class="px-5 py-3 font-medium">Priority</th>
+                      </tr>
+                    </thead>
+                    <tbody class="divide-y divide-ink-600 font-mono text-[13px]">
+                      <tr data-flag="true">
+                        <td class="px-5 py-3.5 font-body">
+                          <div class="flex items-center gap-2.5">
+                            <span class="w-7 h-7 rounded-full bg-ink-700 flex items-center justify-center text-[11px] font-semibold text-mist-100 shrink-0">PK</span>
+                            <span>Priya K. <span class="text-amber">⚠</span></span>
+                          </div>
+                        </td>
+                        <td class="px-4 py-3.5 text-mist-300">RM 3,924</td>
+                        <td class="px-4 py-3.5 text-mist-100">RM 7,576</td>
+                        <td class="px-4 py-3.5 text-signal">▲ 93%</td>
+                        <td class="px-5 py-3.5">
+                          <span class="badge bg-amber/15 text-amber">High</span>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td class="px-5 py-3.5 font-body">
+                          <div class="flex items-center gap-2.5">
+                            <span class="w-7 h-7 rounded-full bg-ink-700 flex items-center justify-center text-[11px] font-semibold text-mist-100 shrink-0">SH</span>
+                            Sofia H.
+                          </div>
+                        </td>
+                        <td class="px-4 py-3.5 text-mist-300">RM 3,650</td>
+                        <td class="px-4 py-3.5 text-mist-100">RM 8,639</td>
+                        <td class="px-4 py-3.5 text-signal">▲ 137%</td>
+                        <td class="px-5 py-3.5">
+                          <span class="badge bg-amber/15 text-amber">High</span>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td class="px-5 py-3.5 font-body">
+                          <div class="flex items-center gap-2.5">
+                            <span class="w-7 h-7 rounded-full bg-ink-700 flex items-center justify-center text-[11px] font-semibold text-mist-100 shrink-0">PK</span>
+                            Priya K.
+                          </div>
+                        </td>
+                        <td class="px-4 py-3.5 text-mist-300">RM 4,163</td>
+                        <td class="px-4 py-3.5 text-mist-100">RM 5,282</td>
+                        <td class="px-4 py-3.5 text-signal">▲ 27%</td>
+                        <td class="px-5 py-3.5">
+                          <span class="badge bg-copilot/15 text-copilot">Medium</span>
+                        </td>
+                      </tr>
+                      <tr data-flag="true">
+                        <td class="px-5 py-3.5 font-body">
+                          <div class="flex items-center gap-2.5">
+                            <span class="w-7 h-7 rounded-full bg-ink-700 flex items-center justify-center text-[11px] font-semibold text-mist-100 shrink-0">AS</span>
+                            <span>Arif S. <span class="text-amber">⚠</span></span>
+                          </div>
+                        </td>
+                        <td class="px-4 py-3.5 text-mist-300">RM 3,715</td>
+                        <td class="px-4 py-3.5 text-mist-100">RM 4,412</td>
+                        <td class="px-4 py-3.5 text-signal">▲ 19%</td>
+                        <td class="px-5 py-3.5">
+                          <span class="badge bg-copilot/15 text-copilot">Medium</span>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td class="px-5 py-3.5 font-body">
+                          <div class="flex items-center gap-2.5">
+                            <span class="w-7 h-7 rounded-full bg-ink-700 flex items-center justify-center text-[11px] font-semibold text-mist-100 shrink-0">LX</span>
+                            Ling Xin
+                          </div>
+                        </td>
+                        <td class="px-4 py-3.5 text-mist-300">RM 3,277</td>
+                        <td class="px-4 py-3.5 text-mist-100">RM 6,609</td>
+                        <td class="px-4 py-3.5 text-signal">▲ 102%</td>
+                        <td class="px-5 py-3.5">
+                          <span class="badge bg-copilot/15 text-copilot">Medium</span>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td class="px-5 py-3.5 font-body">
+                          <div class="flex items-center gap-2.5">
+                            <span class="w-7 h-7 rounded-full bg-ink-700 flex items-center justify-center text-[11px] font-semibold text-mist-100 shrink-0">DO</span>
+                            Daniel Ong
+                          </div>
+                        </td>
+                        <td class="px-4 py-3.5 text-mist-300">RM 2,647</td>
+                        <td class="px-4 py-3.5 text-mist-100">RM 3,384</td>
+                        <td class="px-4 py-3.5 text-signal">▲ 25%</td>
+                        <td class="px-5 py-3.5">
+                          <span class="badge bg-signal/15 text-signal">Watch</span>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td class="px-5 py-3.5 font-body">
+                          <div class="flex items-center gap-2.5">
+                            <span class="w-7 h-7 rounded-full bg-ink-700 flex items-center justify-center text-[11px] font-semibold text-mist-100 shrink-0">PK</span>
+                            Priya K.
+                          </div>
+                        </td>
+                        <td class="px-4 py-3.5 text-mist-300">RM 1,284</td>
+                        <td class="px-4 py-3.5 text-mist-100">RM 2,245</td>
+                        <td class="px-4 py-3.5 text-signal">▲ 75%</td>
+                        <td class="px-5 py-3.5">
+                          <span class="badge bg-signal/15 text-signal">Watch</span>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <div
+                class="rounded-xl bg-ink-800 border border-ink-600 shadow-card p-5"
+              >
+                <h2 class="font-display font-semibold text-mist-100 text-sm">
+                  CLV distribution
+                </h2>
+                <p class="text-xs text-mist-300 mt-0.5 mb-4">
+                  Predicted value band, by customer count
+                </p>
+                <div class="h-64">
+                  <canvas id="clv-distribution-chart"></canvas>
+                </div>
+                <p class="text-[11px] text-mist-300 mt-3 font-mono">
+                  Source: CLV model · predicted 12-month revenue bands
+                </p>
+              </div>
+            </div>
+            </div>
+            <!-- ============================ /SUB-TAB: CUSTOMER LIFETIME VALUE ============================ -->
+          </section>
+
+          <!-- ======================================================= CAMPAIGNS ======================================================= -->
+          <section id="panel-campaigns" class="tab-panel hidden space-y-6">
+            <!-- Top section — Active & Scheduled Campaigns (full width) -->
+            <div
+              class="rounded-xl bg-ink-800 border border-ink-600 shadow-card overflow-hidden"
+            >
+              <div
+                class="flex items-center justify-between px-5 py-4 border-b border-ink-600"
+              >
+                <div>
+                  <h2 class="font-display font-semibold text-mist-100">
+                    Active &amp; Scheduled Campaigns
+                  </h2>
+                  <p class="text-xs text-mist-300 mt-0.5">
+                    Everything live or queued right now
+                  </p>
+                </div>
+                <span
+                  class="text-[11px] font-mono text-mist-300 border border-ink-600 rounded-full px-2.5 py-1"
+                  >4 campaigns</span
+                >
+              </div>
+              <div
+                class="flex flex-wrap items-center gap-2 px-5 py-3 border-b border-ink-600 bg-ink-900/40"
+              >
+                <input
+                  type="text"
+                  placeholder="Search campaigns…"
+                  class="flex-1 min-w-[10rem] rounded-lg bg-ink-900 border border-ink-600 focus:border-copilot/60 focus:outline-none text-xs text-mist-100 placeholder-mist-300/60 px-3 py-2"
+                />
+                <select
+                  class="rounded-lg bg-ink-900 border border-ink-600 focus:border-copilot/60 focus:outline-none text-xs text-mist-100 px-2.5 py-2"
+                >
+                  <option>Status: All</option>
+                  <option>In Progress</option>
+                  <option>Scheduled</option>
+                  <option>Paused</option>
+                  <option>Completed</option>
+                </select>
+              </div>
+              <div class="overflow-x-auto thin-scroll">
+                <table class="w-full text-sm">
+                  <thead>
+                    <tr
+                      class="text-left text-[11px] uppercase tracking-wide text-mist-300 border-b border-ink-600"
+                    >
+                      <th class="px-5 py-3 font-medium">Campaign</th>
+                      <th class="px-4 py-3 font-medium">Segment</th>
+                      <th class="px-4 py-3 font-medium">Channels</th>
+                      <th class="px-4 py-3 font-medium">Budget Used</th>
+                      <th class="px-5 py-3 font-medium">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-ink-600 font-mono text-[13px]">
+                    <tr>
+                      <td class="px-5 py-3.5 font-body text-mist-100">VIP Loyalty Boost</td>
+                      <td class="px-4 py-3.5 text-mist-300">VIP</td>
+                      <td class="px-4 py-3.5 text-mist-300">Email, Push</td>
+                      <td class="px-4 py-3.5 text-mist-300">RM 3,360 / 4,200</td>
+                      <td class="px-5 py-3.5">
+                        <span class="badge bg-copilot/15 text-copilot">In Progress</span>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td class="px-5 py-3.5 font-body text-mist-100">Low-Usage Nudge</td>
+                      <td class="px-4 py-3.5 text-mist-300">Churn Risk</td>
+                      <td class="px-4 py-3.5 text-mist-300">Email</td>
+                      <td class="px-4 py-3.5 text-mist-300">RM 0 / 1,800</td>
+                      <td class="px-5 py-3.5">
+                        <span class="badge bg-amber/15 text-amber">Scheduled</span>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td class="px-5 py-3.5 font-body text-mist-100">Trial Upgrade Push</td>
+                      <td class="px-4 py-3.5 text-mist-300">Potential</td>
+                      <td class="px-4 py-3.5 text-mist-300">Email, SMS</td>
+                      <td class="px-4 py-3.5 text-mist-300">RM 0 / 2,500</td>
+                      <td class="px-5 py-3.5">
+                        <span class="badge bg-amber/15 text-amber">Scheduled</span>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td class="px-5 py-3.5 font-body text-mist-100">Spring Win-back</td>
+                      <td class="px-4 py-3.5 text-mist-300">Churn Risk</td>
+                      <td class="px-4 py-3.5 text-mist-300">Email</td>
+                      <td class="px-4 py-3.5 text-mist-300">RM 2,900 / 2,900</td>
+                      <td class="px-5 py-3.5">
+                        <span class="badge bg-ink-700 text-mist-300">Completed</span>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Divider between the table and the create-campaign form -->
+            <div class="flex items-center gap-3 py-1">
+              <div class="flex-1 border-t border-ink-600"></div>
+              <span class="text-[11px] uppercase tracking-wider text-mist-300/70 font-medium"
+                >Create Campaign</span
+              >
+              <div class="flex-1 border-t border-ink-600"></div>
+            </div>
+
+            <!-- Bottom section — Create Campaign form (with A/B Testing module) -->
+            <div
+              class="rounded-xl bg-ink-800 border border-ink-600 shadow-card p-5"
+            >
+              <h2 class="font-display font-semibold text-mist-100">
+                Create Campaign
+              </h2>
+              <p class="text-xs text-mist-300 mt-0.5 mb-5">
+                Set up a new retention or growth send
+              </p>
+
+              <div class="grid grid-cols-1 lg:grid-cols-2 gap-x-6 gap-y-4">
+                <div>
+                  <label class="text-[11px] uppercase tracking-wide text-mist-300 mb-1.5 block"
+                    >Campaign Name</label
+                  >
+                  <input
+                    type="text"
+                    placeholder="e.g. VIP Loyalty Boost"
+                    class="w-full rounded-lg bg-ink-900 border border-ink-600 focus:border-copilot/60 focus:outline-none text-sm text-mist-100 placeholder-mist-300/60 px-3 py-2.5"
+                  />
+                </div>
+                <div>
+                  <label class="text-[11px] uppercase tracking-wide text-mist-300 mb-1.5 block"
+                    >Target Segment</label
+                  >
+                  <select
+                    class="w-full rounded-lg bg-ink-900 border border-ink-600 focus:border-copilot/60 focus:outline-none text-sm text-mist-100 px-3 py-2.5"
+                  >
+                    <option>VIP customers</option>
+                    <option>Loyal customers</option>
+                    <option>Churn risk customers</option>
+                    <option>Potential customers</option>
+                    <option>All customers</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="text-[11px] uppercase tracking-wide text-mist-300 mb-1.5 block"
+                    >Channels</label
+                  >
+                  <div class="flex flex-wrap gap-3 pt-1">
+                    <label class="flex items-center gap-1.5 text-xs text-mist-100 cursor-pointer select-none">
+                      <input type="checkbox" checked class="accent-copilot w-3.5 h-3.5" />
+                      Email
+                    </label>
+                    <label class="flex items-center gap-1.5 text-xs text-mist-100 cursor-pointer select-none">
+                      <input type="checkbox" class="accent-copilot w-3.5 h-3.5" />
+                      SMS
+                    </label>
+                    <label class="flex items-center gap-1.5 text-xs text-mist-100 cursor-pointer select-none">
+                      <input type="checkbox" class="accent-copilot w-3.5 h-3.5" />
+                      Push
+                    </label>
+                  </div>
+                </div>
+                <div>
+                  <label class="text-[11px] uppercase tracking-wide text-mist-300 mb-1.5 block"
+                    >Budget (RM)</label
+                  >
+                  <input
+                    type="number"
+                    placeholder="4,200"
+                    class="w-full rounded-lg bg-ink-900 border border-ink-600 focus:border-copilot/60 focus:outline-none text-sm text-mist-100 placeholder-mist-300/60 px-3 py-2.5"
+                  />
+                </div>
+                <div>
+                  <label class="text-[11px] uppercase tracking-wide text-mist-300 mb-1.5 block"
+                    >Start Date</label
+                  >
+                  <input
+                    type="date"
+                    class="w-full rounded-lg bg-ink-900 border border-ink-600 focus:border-copilot/60 focus:outline-none text-sm text-mist-100 px-3 py-2.5"
+                  />
+                </div>
+                <div>
+                  <label class="text-[11px] uppercase tracking-wide text-mist-300 mb-1.5 block"
+                    >End Date</label
+                  >
+                  <input
+                    type="date"
+                    class="w-full rounded-lg bg-ink-900 border border-ink-600 focus:border-copilot/60 focus:outline-none text-sm text-mist-100 px-3 py-2.5"
+                  />
+                </div>
+              </div>
+
+              <!-- A/B Testing module -->
+              <div class="ab-test-module mt-6 rounded-xl border border-ink-600 bg-ink-900/40 p-4">
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-2.5">
+                    <span
+                      class="w-7 h-7 rounded-full bg-copilot/15 border border-copilot/30 flex items-center justify-center shrink-0"
+                    >
+                      <svg
+                        class="w-3.5 h-3.5 text-copilot"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                      >
+                        <path d="M4 6h7M4 12h4M4 18h9" />
+                        <path d="M15 6h5M17 6v12M20 15l-3 3-3-3" />
+                      </svg>
+                    </span>
+                    <div>
+                      <p class="text-sm font-semibold text-mist-100">
+                        Enable A/B Testing
+                      </p>
+                      <p class="text-[11px] text-mist-300">
+                        Split this send across two variants and compare
+                        performance
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    id="ab-test-toggle"
+                    onclick="toggleAbTesting()"
+                    role="switch"
+                    aria-checked="false"
+                    class="ab-toggle-switch"
+                  >
+                    <span class="ab-toggle-knob"></span>
+                  </button>
+                </div>
+
+                <div
+                  id="ab-test-variants"
+                  class="hidden grid grid-cols-1 lg:grid-cols-2 gap-4 mt-5 pt-5 border-t border-ink-600"
+                >
+                  <!-- Variant A -->
+                  <div class="rounded-lg border border-signal/30 bg-ink-800 p-4">
+                    <div class="flex items-center gap-2 mb-3">
+                      <span class="badge bg-signal/15 text-signal">Variant A</span>
+                      <span class="text-[11px] text-mist-300">Control</span>
+                    </div>
+                    <div class="space-y-3">
+                      <div>
+                        <label class="text-[11px] uppercase tracking-wide text-mist-300 mb-1.5 block"
+                          >Offer / Incentive</label
+                        >
+                        <input
+                          type="text"
+                          placeholder="10% Discount"
+                          class="w-full rounded-lg bg-ink-900 border border-ink-600 focus:border-signal/60 focus:outline-none text-sm text-mist-100 placeholder-mist-300/60 px-3 py-2.5"
+                        />
+                      </div>
+                      <div>
+                        <label class="text-[11px] uppercase tracking-wide text-mist-300 mb-1.5 block"
+                          >Channel</label
+                        >
+                        <select
+                          class="w-full rounded-lg bg-ink-900 border border-ink-600 focus:border-signal/60 focus:outline-none text-sm text-mist-100 px-3 py-2.5"
+                        >
+                          <option>Email</option>
+                          <option>SMS</option>
+                          <option>Push Notification</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Variant B -->
+                  <div class="rounded-lg border border-copilot/30 bg-ink-800 p-4">
+                    <div class="flex items-center gap-2 mb-3">
+                      <span class="badge bg-copilot/15 text-copilot">Variant B</span>
+                      <span class="text-[11px] text-mist-300">Test</span>
+                    </div>
+                    <div class="space-y-3">
+                      <div>
+                        <label class="text-[11px] uppercase tracking-wide text-mist-300 mb-1.5 block"
+                          >Offer / Incentive</label
+                        >
+                        <input
+                          type="text"
+                          placeholder="15% Discount"
+                          class="w-full rounded-lg bg-ink-900 border border-ink-600 focus:border-copilot/60 focus:outline-none text-sm text-mist-100 placeholder-mist-300/60 px-3 py-2.5"
+                        />
+                      </div>
+                      <div>
+                        <label class="text-[11px] uppercase tracking-wide text-mist-300 mb-1.5 block"
+                          >Channel</label
+                        >
+                        <select
+                          class="w-full rounded-lg bg-ink-900 border border-ink-600 focus:border-copilot/60 focus:outline-none text-sm text-mist-100 px-3 py-2.5"
+                        >
+                          <option selected>Push Notification</option>
+                          <option>Email</option>
+                          <option>SMS</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+
+                  <p class="lg:col-span-2 text-[11px] text-mist-300 font-mono">
+                    Traffic will be split 50/50 between Variant A and Variant
+                    B. Winner is auto-declared after 500 sends per variant.
+                  </p>
+                </div>
+              </div>
+
+              <button
+                class="w-full mt-6 rounded-lg bg-signal hover:bg-signal/90 active:scale-[.98] text-ink-950 font-semibold text-sm py-2.5 transition-all"
+              >
+                Schedule Campaign
+              </button>
+            </div>
+          </section>
+
+          <!-- ======================================================= CALENDAR ======================================================= -->
+          <section id="panel-calendar" class="tab-panel hidden space-y-6">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+              <div
+                class="lg:col-span-2 rounded-xl bg-ink-800 border border-ink-600 shadow-card overflow-hidden"
+              >
+                <div
+                  class="flex items-center justify-between px-5 py-4 border-b border-ink-600"
+                >
+                  <h2 class="font-display font-semibold text-mist-100">
+                    July 2026
+                  </h2>
+                  <div class="flex items-center gap-3 text-[11px] text-mist-300">
+                    <span class="flex items-center gap-1.5"
+                      ><span class="w-2 h-2 rounded-full bg-copilot"></span>In
+                      Progress</span
+                    >
+                    <span class="flex items-center gap-1.5"
+                      ><span class="w-2 h-2 rounded-full bg-amber"></span
+                      >Scheduled</span
+                    >
+                  </div>
+                </div>
+                <div class="p-4">
+                  <div class="grid grid-cols-7 gap-px text-center">
+                    <div class="text-[11px] uppercase tracking-wide text-mist-300 py-2">Sun</div>
+                    <div class="text-[11px] uppercase tracking-wide text-mist-300 py-2">Mon</div>
+                    <div class="text-[11px] uppercase tracking-wide text-mist-300 py-2">Tue</div>
+                    <div class="text-[11px] uppercase tracking-wide text-mist-300 py-2">Wed</div>
+                    <div class="text-[11px] uppercase tracking-wide text-mist-300 py-2">Thu</div>
+                    <div class="text-[11px] uppercase tracking-wide text-mist-300 py-2">Fri</div>
+                    <div class="text-[11px] uppercase tracking-wide text-mist-300 py-2">Sat</div>
+                  </div>
+                  <div class="grid grid-cols-7 gap-1.5 mt-1">
+                    <div class="calendar-cell"></div>
+                    <div class="calendar-cell"></div>
+                    <div class="calendar-cell"></div>
+                    <div class="calendar-cell"><span class="calendar-date">1</span></div>
+                    <div class="calendar-cell"><span class="calendar-date">2</span></div>
+                    <div class="calendar-cell"><span class="calendar-date">3</span></div>
+                    <div class="calendar-cell"><span class="calendar-date">4</span></div>
+
+                    <div class="calendar-cell"><span class="calendar-date">5</span></div>
+                    <div class="calendar-cell"><span class="calendar-date">6</span></div>
+                    <div class="calendar-cell"><span class="calendar-date">7</span></div>
+                    <div class="calendar-cell"><span class="calendar-date">8</span></div>
+                    <div class="calendar-cell">
+                      <span class="calendar-date">9</span>
+                      <span class="calendar-event bg-copilot/20 text-copilot">VIP Loyalty Boost</span>
+                    </div>
+                    <div class="calendar-cell"><span class="calendar-date">10</span></div>
+                    <div class="calendar-cell"><span class="calendar-date">11</span></div>
+
+                    <div class="calendar-cell"><span class="calendar-date">12</span></div>
+                    <div class="calendar-cell"><span class="calendar-date">13</span></div>
+                    <div class="calendar-cell"><span class="calendar-date">14</span></div>
+                    <div class="calendar-cell"><span class="calendar-date">15</span></div>
+                    <div class="calendar-cell"><span class="calendar-date">16</span></div>
+                    <div class="calendar-cell"><span class="calendar-date">17</span></div>
+                    <div class="calendar-cell is-today">
+                      <span class="calendar-date text-signal">18</span>
+                      <span class="text-[9px] font-mono text-signal">Today</span>
+                    </div>
+
+                    <div class="calendar-cell"><span class="calendar-date">19</span></div>
+                    <div class="calendar-cell"><span class="calendar-date">20</span></div>
+                    <div class="calendar-cell"><span class="calendar-date">21</span></div>
+                    <div class="calendar-cell">
+                      <span class="calendar-date">22</span>
+                      <span class="calendar-event bg-amber/20 text-amber">Low-Usage Nu…</span>
+                    </div>
+                    <div class="calendar-cell"><span class="calendar-date">23</span></div>
+                    <div class="calendar-cell"><span class="calendar-date">24</span></div>
+                    <div class="calendar-cell"><span class="calendar-date">25</span></div>
+
+                    <div class="calendar-cell"><span class="calendar-date">26</span></div>
+                    <div class="calendar-cell"><span class="calendar-date">27</span></div>
+                    <div class="calendar-cell">
+                      <span class="calendar-date">28</span>
+                      <span class="calendar-event bg-amber/20 text-amber">Trial Upgrade P…</span>
+                    </div>
+                    <div class="calendar-cell"><span class="calendar-date">29</span></div>
+                    <div class="calendar-cell"><span class="calendar-date">30</span></div>
+                    <div class="calendar-cell"><span class="calendar-date">31</span></div>
+                    <div class="calendar-cell"></div>
+                  </div>
+                </div>
+              </div>
+
+              <div
+                class="rounded-xl bg-ink-800 border border-ink-600 shadow-card p-5"
+              >
+                <h2 class="font-display font-semibold text-mist-100 text-sm">
+                  Upcoming Sends
+                </h2>
+                <p class="text-xs text-mist-300 mt-0.5 mb-4">
+                  Next campaigns queued this month
+                </p>
+                <div class="space-y-2.5">
+                  <div class="flex items-center gap-3 rounded-lg bg-ink-900/60 border border-ink-600 p-3">
+                    <span class="w-9 h-9 rounded-lg bg-copilot/15 border border-copilot/30 flex items-center justify-center text-xs font-semibold text-copilot shrink-0">09</span>
+                    <div>
+                      <p class="text-sm font-medium text-mist-100">VIP Loyalty Boost</p>
+                      <p class="text-[11px] text-mist-300">Email, Push · In Progress</p>
+                    </div>
+                  </div>
+                  <div class="flex items-center gap-3 rounded-lg bg-ink-900/60 border border-ink-600 p-3">
+                    <span class="w-9 h-9 rounded-lg bg-amber/15 border border-amber/30 flex items-center justify-center text-xs font-semibold text-amber shrink-0">22</span>
+                    <div>
+                      <p class="text-sm font-medium text-mist-100">Low-Usage Nudge</p>
+                      <p class="text-[11px] text-mist-300">Email · Scheduled</p>
+                    </div>
+                  </div>
+                  <div class="flex items-center gap-3 rounded-lg bg-ink-900/60 border border-ink-600 p-3">
+                    <span class="w-9 h-9 rounded-lg bg-amber/15 border border-amber/30 flex items-center justify-center text-xs font-semibold text-amber shrink-0">28</span>
+                    <div>
+                      <p class="text-sm font-medium text-mist-100">Trial Upgrade Push</p>
+                      <p class="text-[11px] text-mist-300">Email, SMS · Scheduled</p>
+                    </div>
+                  </div>
+                </div>
+                <button
+                  onclick="switchTab('campaigns')"
+                  class="w-full mt-4 rounded-lg border border-ink-600 hover:border-copilot/50 hover:text-copilot text-mist-100 text-sm font-medium py-2.5 transition-colors"
+                >
+                  + Schedule New Campaign
+                </button>
+              </div>
+            </div>
+          </section>
+
+          <!-- ======================================================= AI COPILOT (dedicated, ChatGPT-style) ======================================================= -->
+          <section
+            id="panel-copilot"
+            class="tab-panel hidden flex flex-col"
+            style="height: calc(100vh - 148px)"
+          >
+            <!-- Empty / welcome state — centered, shown until the first message -->
+            <div
+              id="copilot-welcome"
+              class="flex-1 flex flex-col items-center justify-center px-4 text-center"
+            >
+              <span
+                class="w-11 h-11 rounded-full bg-copilot/15 border border-copilot/30 flex items-center justify-center mb-5"
+              >
+                <svg
+                  class="w-5 h-5 text-copilot"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <path
+                    d="M12 3v3M12 18v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M3 12h3M18 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"
+                  />
+                  <circle cx="12" cy="12" r="3.2" />
+                </svg>
+              </span>
+              <h1
+                class="font-display text-2xl sm:text-3xl font-semibold text-mist-100"
+              >
+                Good morning, Adam.
+              </h1>
+              <p class="text-sm text-mist-300 mt-2.5 max-w-md">
+                I've analyzed the latest telemetry across your 50,000
+                subscribers. How can I help you protect your revenue today?
+              </p>
+
+              <div
+                class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-8 w-full max-w-xl"
+              >
+                <button
+                  onclick="startQuickPrompt('clean')"
+                  class="text-left rounded-xl bg-ink-800 border border-ink-600 hover:border-copilot/50 hover:bg-ink-700/60 shadow-card p-4 transition-all"
+                >
+                  <p class="text-sm font-semibold text-mist-100 mb-1">
+                    🧹 Clean Data
+                  </p>
+                  <p class="text-[12px] text-mist-300 leading-relaxed">
+                    Upload a messy CSV for auto-cleaning and integration.
+                  </p>
+                </button>
+                <button
+                  onclick="startQuickPrompt('audience')"
+                  class="text-left rounded-xl bg-ink-800 border border-ink-600 hover:border-copilot/50 hover:bg-ink-700/60 shadow-card p-4 transition-all"
+                >
+                  <p class="text-sm font-semibold text-mist-100 mb-1">
+                    🎯 Find Audiences
+                  </p>
+                  <p class="text-[12px] text-mist-300 leading-relaxed">
+                    Show me high-value VIPs currently at risk of leaving.
+                  </p>
+                </button>
+                <button
+                  onclick="startQuickPrompt('simulate')"
+                  class="text-left rounded-xl bg-ink-800 border border-ink-600 hover:border-copilot/50 hover:bg-ink-700/60 shadow-card p-4 transition-all"
+                >
+                  <p class="text-sm font-semibold text-mist-100 mb-1">
+                    🧠 Simulate Strategy
+                  </p>
+                  <p class="text-[12px] text-mist-300 leading-relaxed">
+                    What if I offer a 15% discount to at-risk VIPs?
+                  </p>
+                </button>
+                <button
+                  onclick="startQuickPrompt('campaigns')"
+                  class="text-left rounded-xl bg-ink-800 border border-ink-600 hover:border-copilot/50 hover:bg-ink-700/60 shadow-card p-4 transition-all"
+                >
+                  <p class="text-sm font-semibold text-mist-100 mb-1">
+                    📈 Analyze Campaigns
+                  </p>
+                  <p class="text-[12px] text-mist-300 leading-relaxed">
+                    Show me an overview report of our recent campaigns.
+                  </p>
+                </button>
+              </div>
+            </div>
+
+            <!-- Chat thread — hidden until the first message, then fills the panel -->
+            <div
+              id="chat-thread"
+              class="hidden flex-1 overflow-y-auto thin-scroll space-y-3 px-2 sm:px-6 py-4 max-w-3xl mx-auto w-full"
+            ></div>
+
+            <!-- Floating input bar -->
+            <div class="px-2 sm:px-6 pb-6 pt-2 max-w-3xl mx-auto w-full">
+              <div
+                class="flex items-end gap-2 rounded-2xl bg-ink-800 border border-ink-600 focus-within:border-copilot/60 shadow-card px-3 py-2.5"
+              >
+                <textarea
+                  id="chat-input"
+                  rows="1"
+                  class="flex-1 resize-none bg-transparent border-0 focus:outline-none text-sm text-mist-100 placeholder-mist-300 px-1 py-1.5 leading-snug"
+                  placeholder="Ask Copilot to analyze data, build an audience, or draft a campaign…"
+                ></textarea>
+                <button
+                  id="chat-send-btn"
+                  onclick="sendSimulation()"
+                  aria-label="Send"
+                  class="shrink-0 w-9 h-9 rounded-lg bg-copilot hover:bg-copilot/90 active:scale-[.96] flex items-center justify-center transition-all shadow-[0_8px_20px_-6px_rgba(124,140,246,0.5)]"
+                >
+                  <svg
+                    class="w-4 h-4 text-white"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                  >
+                    <path d="M4 12l16-7-6 16-2.5-6.5L4 12Z" />
+                  </svg>
+                </button>
+              </div>
+              <p class="text-[10px] text-mist-300 mt-2 text-center">
+                Simulations don't send anything — you approve before emails go
+                out.
+              </p>
+            </div>
+
+          </section>
+        </div>
+      </main>
+    </div>
+
+    <!-- ============================== CHURN EXPLAINABILITY DRAWER ============================== -->
+    <div
+      id="explain-drawer-backdrop"
+      data-open="false"
+      class="fixed inset-0 z-30 bg-black/50"
+      onclick="if (event.target.id === 'explain-drawer-backdrop') closeExplainDrawer()"
+    >
+      <aside
+        id="explain-drawer"
+        class="absolute top-0 right-0 h-full w-full sm:w-[420px] bg-ink-800 border-l border-ink-600 shadow-card overflow-y-auto thin-scroll"
+      >
+        <div
+          class="flex items-center justify-between px-5 py-4 border-b border-ink-600 sticky top-0 bg-ink-800 z-10"
+        >
+          <div>
+            <p class="text-[11px] uppercase tracking-wide text-mist-300">
+              Why this score
+            </p>
+            <h2
+              id="explain-drawer-name"
+              class="font-display font-semibold text-mist-100"
+            >
+              Customer
+            </h2>
+          </div>
+          <button
+            onclick="closeExplainDrawer()"
+            class="row-action-btn"
+            aria-label="Close"
+          >
+            <svg
+              class="w-3.5 h-3.5"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path d="M6 6l12 12M18 6L6 18" />
+            </svg>
+          </button>
+        </div>
+        <div class="p-5 space-y-4">
+          <div
+            class="flex items-center justify-between rounded-lg bg-ink-900 border border-ink-600 px-4 py-3"
+          >
+            <span class="text-xs text-mist-300">AI Churn Probability</span>
+            <span
+              id="explain-drawer-score"
+              class="inline-flex items-center px-2.5 py-1 rounded-full bg-coral/15 text-coral font-semibold font-mono text-sm"
+              >92%</span
+            >
+          </div>
+          <div>
+            <p
+              class="text-[11px] uppercase tracking-wide text-copilot font-medium mb-2"
+            >
+              Reasoning behind this score
+            </p>
+            <ul
+              id="explain-drawer-reasons"
+              class="space-y-2.5 text-[13px] text-mist-100 leading-relaxed"
+            ></ul>
+          </div>
+          <div class="rounded-lg bg-ink-900/60 border border-ink-600 px-3.5 py-3">
+            <p class="text-[11px] uppercase tracking-wide text-mist-300 mb-1">
+              Suggested next step
+            </p>
+            <p
+              id="explain-drawer-action"
+              class="text-[13px] text-mist-100 leading-relaxed"
+            ></p>
+          </div>
+          <button
+            onclick="switchTab('copilot'); closeExplainDrawer();"
+            class="w-full rounded-lg bg-copilot hover:bg-copilot/90 active:scale-[.98] text-white font-semibold text-sm py-2.5 transition-all"
+          >
+            Create rescue campaign for this segment
+          </button>
+        </div>
+      </aside>
+    </div>
+
+    <!-- ============================== CHART DRILL-DOWN MODAL ============================== -->
+    <div
+      id="chart-modal"
+      data-open="false"
+      class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+    >
+      <div
+        class="modal-panel w-full max-w-lg rounded-xl bg-ink-800 border border-ink-600 shadow-card p-6"
+      >
+        <div class="flex items-start justify-between mb-4">
+          <div>
+            <h3
+              id="modal-title"
+              class="font-display font-semibold text-mist-100"
+            >
+              Chart
+            </h3>
+            <p id="modal-subtitle" class="text-xs text-mist-300 mt-0.5">
+              Subtitle
+            </p>
+          </div>
+          <button
+            onclick="closeChartModal()"
+            aria-label="Close"
+            class="w-7 h-7 rounded-full flex items-center justify-center text-mist-300 hover:text-mist-100 hover:bg-ink-700 transition-colors"
+          >
+            <svg
+              class="w-4 h-4"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path d="M6 6l12 12M18 6L6 18" />
+            </svg>
+          </button>
+        </div>
+        <div class="h-64"><canvas id="modal-chart"></canvas></div>
+        <p
+          id="modal-footnote"
+          class="text-[11px] text-mist-300 mt-4 font-mono"
+        ></p>
+      </div>
+    </div>
+
+    <script>
+      /* =================================================================
+     0. TAB SWITCHING
+  ==================================================================*/
+      const headerText = {
+        overview: [
+          "Retention Overview",
+          "Live churn signals across your subscriber base",
+        ],
+        customers: [
+          "Customer Segmentation",
+          "Behaviour, purchase history, demographics & engagement",
+        ],
+        churn: [
+          "Prediction",
+          "Who is likely to leave, what they're worth, and why",
+        ],
+        campaigns: [
+          "Campaigns",
+          "Build, launch, and track retention & growth campaigns",
+        ],
+        calendar: [
+          "Content Calendar",
+          "Everything scheduled to send, at a glance",
+        ],
+        copilot: [
+          "AI Retention Copilot",
+          "Ask what-if — get the number and the reasoning behind it",
+        ],
+      };
+
+      let chartsInitialized = {
+        churn: false,
+        clv: false,
+        overviewTrend: false,
+        overviewSegment: false,
+      };
+
+      function switchTab(tab) {
+        document
+          .querySelectorAll(".tab-panel")
+          .forEach((p) => p.classList.add("hidden"));
+        document.getElementById("panel-" + tab).classList.remove("hidden");
+
+        document.querySelectorAll(".nav-link").forEach((btn) => {
+          btn.classList.toggle("active", btn.getAttribute("data-tab") === tab);
+        });
+
+        document.getElementById("header-title").textContent =
+          headerText[tab][0];
+        document.getElementById("header-subtitle").textContent =
+          headerText[tab][1];
+
+        if (tab === "overview") {
+          if (!chartsInitialized.overviewTrend) {
+            initOverviewTrendChart();
+            chartsInitialized.overviewTrend = true;
+          }
+          if (!chartsInitialized.overviewSegment) {
+            initOverviewSegmentChart();
+            chartsInitialized.overviewSegment = true;
+          }
+        }
+
+        if (tab === "churn" && !chartsInitialized.churn) {
+          initFeatureImportanceChart();
+          chartsInitialized.churn = true;
+        }
+
+        const newChatBtn = document.getElementById("new-chat-btn");
+        if (newChatBtn) {
+          newChatBtn.classList.toggle("hidden", tab !== "copilot");
+          newChatBtn.classList.toggle("flex", tab === "copilot");
+        }
+      }
+
+      /* =================================================================
+     0c. PREDICTION PAGE — sub-tabs (Churn Risk / Customer Lifetime Value)
+  ==================================================================*/
+      function switchPredictionTab(sub) {
+        document
+          .querySelectorAll(".prediction-subpanel")
+          .forEach((p) => p.classList.add("hidden"));
+        document.getElementById("prediction-sub-" + sub).classList.remove("hidden");
+
+        document.querySelectorAll(".prediction-tab-btn").forEach((btn) => {
+          btn.classList.toggle(
+            "prediction-tab-active",
+            btn.getAttribute("data-sub") === sub
+          );
+        });
+
+        if (sub === "churn" && !chartsInitialized.churn) {
+          initFeatureImportanceChart();
+          chartsInitialized.churn = true;
+        }
+        if (sub === "clv" && !chartsInitialized.clv) {
+          initClvDistributionChart();
+          chartsInitialized.clv = true;
+        }
+      }
+
+      /* =================================================================
+     0b. ALERTS / NOTIFICATIONS
+  ==================================================================*/
+      function toggleAlertsPanel() {
+        document.getElementById("alerts-panel").classList.toggle("hidden");
+      }
+
+      function markAllAlertsRead() {
+        document
+          .querySelectorAll("#alerts-list .alert-item span.w-1\\.5")
+          .forEach((dot) => dot.classList.add("opacity-30"));
+        document.getElementById("alerts-badge").classList.add("hidden");
+      }
+
+      document.addEventListener("click", (e) => {
+        const panel = document.getElementById("alerts-panel");
+        const btn = document.getElementById("alerts-bell-btn");
+        if (
+          !panel.classList.contains("hidden") &&
+          !panel.contains(e.target) &&
+          !btn.contains(e.target)
+        ) {
+          panel.classList.add("hidden");
+        }
+      });
+
+      /* =================================================================
+     1. COUNT-UP ANIMATION for KPI banner
+  ==================================================================*/
+      document.querySelectorAll("[data-count]").forEach((el) => {
+        const target = parseInt(el.getAttribute("data-count"), 10);
+        const suffix = el.getAttribute("data-suffix") || "";
+        const duration = 900;
+        const start = performance.now();
+        function tick(now) {
+          const progress = Math.min((now - start) / duration, 1);
+          const eased = 1 - Math.pow(1 - progress, 3);
+          const value = Math.round(target * eased);
+          el.textContent = value.toLocaleString("en-US") + suffix;
+          if (progress < 1) requestAnimationFrame(tick);
+        }
+        requestAnimationFrame(tick);
+      });
+
+      /* Pipeline rail — lights Step 4 ("Act") once a campaign is approved & sent */
+      function lightPipelineToAction() {
+        const pipelineFlow = document.getElementById("pipeline-flow");
+        const dotAction = document.getElementById("dot-action");
+        if (!pipelineFlow || !dotAction) return;
+        pipelineFlow.style.height = "100%";
+        dotAction.classList.add("lit");
+      }
+
+      /* =================================================================
+     2. KPI DRILL-DOWN CHARTS (Overview tab)
+  ==================================================================*/
+      let modalChartInstance = null;
+      const chartDefs = {
+        customers: {
+          title: "Customer Base Breakdown",
+          subtitle: "Active subscribers by plan tier",
+          footnote: "Source: merged churn datasets · plan field · 50,000 rows",
+          type: "doughnut",
+          data: {
+            labels: ["Free Trial", "Basic", "Pro", "VIP"],
+            datasets: [
+              {
+                data: [40, 30, 20, 10],
+                backgroundColor: ["#31404F", "#2FD8B0", "#7C8CF6", "#F0A93E"],
+                borderColor: "#131B24",
+                borderWidth: 3,
+                hoverOffset: 6,
+              },
+            ],
+          },
+          options: {
+            plugins: {
+              legend: {
+                position: "bottom",
+                labels: {
+                  color: "#AEB8C4",
+                  boxWidth: 10,
+                  padding: 16,
+                  font: { family: "Inter", size: 12 },
+                },
+              },
+              tooltip: {
+                callbacks: { label: (ctx) => ` ${ctx.label}: ${ctx.parsed}%` },
+              },
+            },
+            cutout: "62%",
+            maintainAspectRatio: false,
+          },
+        },
+        churn: {
+          title: "Churn Rate — Last 6 Months",
+          subtitle: "Monthly churn rate since the model went live",
+          footnote: "Source: risk model backtest · trailing 6-month window",
+          type: "line",
+          data: {
+            labels: ["Feb", "Mar", "Apr", "May", "Jun", "Jul"],
+            datasets: [
+              {
+                label: "Churn rate",
+                data: [8.2, 7.5, 6.9, 6.1, 5.4, 4.8],
+                borderColor: "#2FD8B0",
+                backgroundColor: "rgba(47,216,176,0.12)",
+                pointBackgroundColor: "#2FD8B0",
+                pointBorderColor: "#131B24",
+                pointBorderWidth: 2,
+                pointRadius: 4,
+                fill: true,
+                tension: 0.35,
+              },
+            ],
+          },
+          options: {
+            plugins: {
+              legend: { display: false },
+              tooltip: {
+                callbacks: { label: (ctx) => ` ${ctx.parsed.y}% churn` },
+              },
+            },
+            scales: {
+              x: {
+                ticks: {
+                  color: "#8B97A6",
+                  font: { family: "IBM Plex Mono", size: 11 },
+                },
+                grid: { color: "#1A232E" },
+              },
+              y: {
+                ticks: {
+                  color: "#8B97A6",
+                  font: { family: "IBM Plex Mono", size: 11 },
+                  callback: (v) => v + "%",
+                },
+                grid: { color: "#1A232E" },
+              },
+            },
+            maintainAspectRatio: false,
+          },
+        },
+      };
+
+      function openChartModal(key) {
+        const def = chartDefs[key];
+        const modal = document.getElementById("chart-modal");
+        document.getElementById("modal-title").textContent = def.title;
+        document.getElementById("modal-subtitle").textContent = def.subtitle;
+        document.getElementById("modal-footnote").textContent = def.footnote;
+        if (modalChartInstance) modalChartInstance.destroy();
+        const ctx = document.getElementById("modal-chart").getContext("2d");
+        modalChartInstance = new Chart(ctx, {
+          type: def.type,
+          data: def.data,
+          options: def.options,
+        });
+        modal.setAttribute("data-open", "true");
+      }
+      function closeChartModal() {
+        document
+          .getElementById("chart-modal")
+          .setAttribute("data-open", "false");
+      }
+      document.getElementById("chart-modal").addEventListener("click", (e) => {
+        if (e.target.id === "chart-modal") closeChartModal();
+      });
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") closeChartModal();
+      });
+
+      /* =================================================================
+     2b. OVERVIEW — inline churn trend + segment distribution charts
+  ==================================================================*/
+      function initOverviewTrendChart() {
+        const el = document.getElementById("overview-trend-chart");
+        if (!el) return;
+        new Chart(el.getContext("2d"), {
+          type: "line",
+          data: {
+            labels: [
+              "W1", "W2", "W3", "W4", "W5", "W6",
+              "W7", "W8", "W9", "W10", "W11", "W12",
+            ],
+            datasets: [
+              {
+                label: "Churn rate",
+                data: [7.8, 7.6, 7.9, 7.4, 7.1, 7.3, 6.8, 6.5, 6.7, 6.2, 6.0, 5.8],
+                borderColor: "#2FD8B0",
+                backgroundColor: "rgba(47,216,176,0.12)",
+                pointBackgroundColor: "#2FD8B0",
+                pointBorderColor: "#131B24",
+                pointBorderWidth: 2,
+                pointRadius: 3,
+                fill: true,
+                tension: 0.35,
+              },
+            ],
+          },
+          options: {
+            plugins: {
+              legend: { display: false },
+              tooltip: {
+                callbacks: { label: (ctx) => ` ${ctx.parsed.y}% churn` },
+              },
+            },
+            scales: {
+              x: {
+                ticks: {
+                  color: "#8B97A6",
+                  font: { family: "IBM Plex Mono", size: 10 },
+                },
+                grid: { color: "#1A232E" },
+              },
+              y: {
+                ticks: {
+                  color: "#8B97A6",
+                  font: { family: "IBM Plex Mono", size: 10 },
+                  callback: (v) => v + "%",
+                },
+                grid: { color: "#1A232E" },
+              },
+            },
+            maintainAspectRatio: false,
+          },
+        });
+      }
+
+      function initOverviewSegmentChart() {
+        const el = document.getElementById("overview-segment-chart");
+        if (!el) return;
+        new Chart(el.getContext("2d"), {
+          type: "doughnut",
+          data: {
+            labels: ["VIP", "Loyal", "Churn Risk", "Potential"],
+            datasets: [
+              {
+                data: [3850, 15400, 3200, 11550],
+                backgroundColor: ["#F0A93E", "#2FD8B0", "#F0584C", "#31404F"],
+                borderColor: "#131B24",
+                borderWidth: 3,
+                hoverOffset: 6,
+              },
+            ],
+          },
+          options: {
+            plugins: {
+              legend: {
+                position: "bottom",
+                labels: {
+                  color: "#AEB8C4",
+                  boxWidth: 10,
+                  padding: 14,
+                  font: { family: "Inter", size: 11 },
+                },
+              },
+              tooltip: {
+                callbacks: {
+                  label: (ctx) =>
+                    ` ${ctx.label}: ${ctx.parsed.toLocaleString("en-US")}`,
+                },
+              },
+            },
+            cutout: "62%",
+            maintainAspectRatio: false,
+          },
+        });
+      }
+
+      /* =================================================================
+     3. CHURN PREDICTION — feature importance chart (lazy init)
+  ==================================================================*/
+      function initFeatureImportanceChart() {
+        const ctx = document
+          .getElementById("feature-importance-chart")
+          .getContext("2d");
+        new Chart(ctx, {
+          type: "bar",
+          data: {
+            labels: [
+              "Unresolved support ticket",
+              "Daily usage < 15 min",
+              "Login frequency drop",
+              "Late payment",
+              "Unused premium features",
+              "Account age < 90 days",
+            ],
+            datasets: [
+              {
+                data: [92, 85, 74, 61, 53, 38],
+                backgroundColor: "#F0584C",
+                borderRadius: 4,
+                barThickness: 16,
+              },
+            ],
+          },
+          options: {
+            indexAxis: "y",
+            plugins: {
+              legend: { display: false },
+              tooltip: {
+                callbacks: {
+                  label: (ctx) => ` ${ctx.parsed.x}% relative importance`,
+                },
+              },
+            },
+            scales: {
+              x: {
+                max: 100,
+                ticks: {
+                  color: "#8B97A6",
+                  font: { family: "IBM Plex Mono", size: 10 },
+                  callback: (v) => v + "%",
+                },
+                grid: { color: "#1A232E" },
+              },
+              y: {
+                ticks: {
+                  color: "#AEB8C4",
+                  font: { family: "Inter", size: 11 },
+                },
+                grid: { display: false },
+              },
+            },
+            maintainAspectRatio: false,
+          },
+        });
+      }
+
+      /* =================================================================
+     3a. PREDICTION — Customer Lifetime Value sub-tab
+  ==================================================================*/
+      function initClvDistributionChart() {
+        const el = document.getElementById("clv-distribution-chart");
+        if (!el) return;
+        new Chart(el.getContext("2d"), {
+          type: "bar",
+          data: {
+            labels: ["<1K", "1-3K", "3-6K", "6-10K", "10K+"],
+            datasets: [
+              {
+                data: [420, 988, 1240, 610, 162],
+                backgroundColor: [
+                  "#7C8CF6",
+                  "#2FD8B0",
+                  "#2FD8B0",
+                  "#F0A93E",
+                  "#F0A93E",
+                ],
+                borderRadius: 4,
+                barThickness: 34,
+              },
+            ],
+          },
+          options: {
+            plugins: {
+              legend: { display: false },
+              tooltip: {
+                callbacks: {
+                  label: (ctx) =>
+                    ` ${ctx.parsed.y.toLocaleString("en-US")} customers`,
+                },
+              },
+            },
+            scales: {
+              x: {
+                ticks: {
+                  color: "#8B97A6",
+                  font: { family: "IBM Plex Mono", size: 10 },
+                },
+                grid: { display: false },
+              },
+              y: {
+                ticks: {
+                  color: "#8B97A6",
+                  font: { family: "IBM Plex Mono", size: 10 },
+                },
+                grid: { color: "#1A232E" },
+              },
+            },
+            maintainAspectRatio: false,
+          },
+        });
+      }
+
+      function toggleFlaggedAccounts() {
+        const flaggedOnly = document.getElementById(
+          "clv-flagged-toggle",
+        ).checked;
+        document.querySelectorAll("#clv-priority-table tbody tr").forEach((row) => {
+          if (!flaggedOnly || row.getAttribute("data-flag") === "true") {
+            row.classList.remove("hidden");
+          } else {
+            row.classList.add("hidden");
+          }
+        });
+      }
+
+      /* =================================================================
+     3a-ii. PREDICTION / CLV — export priority list to CSV
+  ==================================================================*/
+      function exportClvPriorityList() {
+        const headers = [
+          "Customer",
+          "Flagged",
+          "Current Value",
+          "Predicted 12mo LTV",
+          "Growth",
+          "Priority",
+        ];
+        const rows = [];
+
+        document
+          .querySelectorAll("#clv-priority-table tbody tr")
+          .forEach((row) => {
+            if (row.classList.contains("hidden")) return; // respect active filter
+
+            const cells = row.querySelectorAll("td");
+            if (cells.length < 5) return;
+
+            const nameCell = cells[0].cloneNode(true);
+            // Strip the flag emoji from the visible name text
+            const flaggedEl = nameCell.querySelector(".text-amber");
+            const isFlagged = row.getAttribute("data-flag") === "true";
+            if (flaggedEl) flaggedEl.remove();
+            const customerName = nameCell.textContent.trim();
+
+            const currentValue = cells[1].textContent.trim();
+            const predictedLtv = cells[2].textContent.trim();
+            const growth = cells[3].textContent.replace("▲", "").trim();
+            const priority = cells[4].textContent.trim();
+
+            rows.push([
+              customerName,
+              isFlagged ? "Yes" : "No",
+              currentValue,
+              predictedLtv,
+              growth,
+              priority,
+            ]);
+          });
+
+        const escapeCsv = (value) => {
+          const str = String(value);
+          return /[",\n]/.test(str) ? `"${str.replace(/"/g, '""')}"` : str;
+        };
+
+        const csvLines = [headers, ...rows].map((line) =>
+          line.map(escapeCsv).join(","),
+        );
+        const csvString = csvLines.join("\r\n");
+
+        const blob = new Blob([csvString], { type: "text/csv;charset=utf-8;" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.setAttribute("download", "clv_priority_list.csv");
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      }
+
+      /* =================================================================
+     3a-iii. CAMPAIGNS — A/B testing toggle
+  ==================================================================*/
+      function toggleAbTesting() {
+        const toggle = document.getElementById("ab-test-toggle");
+        const variants = document.getElementById("ab-test-variants");
+        const isOn = toggle.getAttribute("aria-checked") === "true";
+        toggle.setAttribute("aria-checked", String(!isOn));
+        variants.classList.toggle("hidden", isOn);
+      }
+
+      /* =================================================================
+     3b. CHURN PREDICTION — dynamic filters + explainability drawer
+  ==================================================================*/
+      function filterRiskTable() {
+        const probability = document.getElementById(
+          "churn-filter-probability",
+        ).value;
+        const reason = document.getElementById("churn-filter-reason").value;
+        const ticket = document.getElementById("churn-filter-ticket").value;
+        const rows = document.querySelectorAll("#risk-table tbody tr.risk-row");
+        let visibleCount = 0;
+
+        rows.forEach((row) => {
+          const matchesProbability =
+            probability === "all" || row.dataset.risk === probability;
+          const matchesReason =
+            reason === "all" || row.dataset.reason === reason;
+          const matchesTicket =
+            ticket === "all" || row.dataset.ticket === ticket;
+          const show = matchesProbability && matchesReason && matchesTicket;
+          row.classList.toggle("hidden", !show);
+          if (show) visibleCount++;
+        });
+
+        document
+          .getElementById("risk-table-empty-state")
+          .classList.toggle("hidden", visibleCount > 0);
+      }
+
+      function resetRiskFilters() {
+        document.getElementById("churn-filter-probability").value = "all";
+        document.getElementById("churn-filter-reason").value = "all";
+        document.getElementById("churn-filter-ticket").value = "all";
+        filterRiskTable();
+      }
+
+      const CHURN_EXPLANATIONS = {
+        "Amirah Zulkifli": {
+          score: "89%",
+          scoreClass: "bg-coral/15 text-coral",
+          reasons: [
+            "Daily usage has dropped to 8 minutes/day — well below the 15-minute risk threshold.",
+            "A support ticket has been open for 5 days without resolution, the single strongest predictor of churn.",
+            "Login frequency (2/week) is trending down over the last 3 weeks.",
+          ],
+          action:
+            "Prioritise this open ticket for same-day resolution, then enrol in the Low-Usage rescue campaign.",
+        },
+        "Ridzuan Hashim": {
+          score: "22%",
+          scoreClass: "bg-signal/15 text-signal",
+          reasons: [
+            "Daily usage (34 min) is healthy and consistent with retained customers.",
+            "Last support ticket was resolved 40 days ago with no repeat contact.",
+            "Login frequency (5/week) is stable over the trailing 8 weeks.",
+          ],
+          action:
+            "No action needed — this account is a good candidate for a loyalty or referral offer instead.",
+        },
+        "Priya Nair": {
+          score: "92%",
+          scoreClass: "bg-coral/15 text-coral",
+          reasons: [
+            "Daily usage has fallen to 5 minutes/day, the lowest in this cohort.",
+            "A support ticket has been open for 2 days and is still unresolved.",
+            "Account tenure (730 days) shows this is a long-standing customer now disengaging — a high-value save.",
+          ],
+          action:
+            "Escalate the open ticket immediately and offer a personalised win-back incentive before the next billing cycle.",
+        },
+        "Chen Wei Ling": {
+          score: "81%",
+          scoreClass: "bg-coral/15 text-coral",
+          reasons: [
+            "Support ticket has been open for 12 days — well past the team's target response window.",
+            "Daily usage (12 min) sits under the 15-minute risk threshold.",
+            "Login frequency (3/week) is below the healthy-account baseline.",
+          ],
+          action:
+            "Resolve the outstanding ticket and follow up with a satisfaction check-in within 48 hours.",
+        },
+        "Farah Aziz": {
+          score: "63%",
+          scoreClass: "bg-amber/15 text-amber",
+          reasons: [
+            "Daily usage (45 min) is moderate but has softened compared to prior months.",
+            "Support ticket was resolved 90 days ago — no recent friction, but engagement hasn't fully recovered.",
+            "Login frequency (4/week) is adequate but not yet back to baseline.",
+          ],
+          action:
+            "Monitor for another 2 weeks; if usage doesn't recover, add to the next retention nudge campaign.",
+        },
+      };
+
+      function openExplainDrawer(name) {
+        const data = CHURN_EXPLANATIONS[name];
+        if (!data) return;
+        document.getElementById("explain-drawer-name").textContent = name;
+        const scoreEl = document.getElementById("explain-drawer-score");
+        scoreEl.textContent = data.score;
+        scoreEl.className = `inline-flex items-center px-2.5 py-1 rounded-full font-semibold font-mono text-sm ${data.scoreClass}`;
+        document.getElementById("explain-drawer-reasons").innerHTML = data.reasons
+          .map(
+            (r) =>
+              `<li class="flex gap-2"><span class="text-copilot mt-0.5">•</span><span>${r}</span></li>`,
+          )
+          .join("");
+        document.getElementById("explain-drawer-action").textContent =
+          data.action;
+        document
+          .getElementById("explain-drawer-backdrop")
+          .setAttribute("data-open", "true");
+      }
+
+      function closeExplainDrawer() {
+        document
+          .getElementById("explain-drawer-backdrop")
+          .setAttribute("data-open", "false");
+      }
+
+      /* =================================================================
+     4. REPORTS — campaign performance data (now rendered as in-chat
+        Copilot widgets rather than a standalone Reports tab)
+  ==================================================================*/
+      const REPORTS_MACRO_TREND = {
+        labels: ["Feb", "Mar", "Apr", "May", "Jun", "Jul"],
+        open: [31, 34, 36, 39, 41, 42],
+        ctr: [11, 12, 14, 15, 17, 18],
+        conv: [5.1, 5.8, 6.5, 7.4, 8.6, 9.4],
+      };
+      const REPORTS_MACRO_CHANNEL = {
+        labels: ["Email", "SMS", "Push"],
+        open: [42, 61, 28],
+        ctr: [18, 22, 14],
+        conv: [9.4, 12.1, 6.2],
+      };
+
+      const CAMPAIGN_COMPARISON_DATA = {
+        "VIP Loyalty Boost": {
+          color: "#F0A93E",
+          trend: [24, 29, 33, 37, 40, 44],
+          channel: { open: 51, ctr: 24, conv: 12.8 },
+        },
+        "Low-Usage Nudge": {
+          color: "#F0584C",
+          trend: [9, 10, 11, 11, 12, 12],
+          channel: { open: 22, ctr: 9, conv: 4.1 },
+        },
+        "Trial Upgrade Push": {
+          color: "#2FD8B0",
+          trend: [15, 18, 22, 27, 31, 35],
+          channel: { open: 38, ctr: 19, conv: 8.6 },
+        },
+        "Spring Win-back": {
+          color: "#7C8CF6",
+          trend: [20, 22, 24, 25, 27, 28],
+          channel: { open: 33, ctr: 15, conv: 6.9 },
+        },
+      };
+
+      function reportsChartOptions(yUnit) {
+        return {
+          plugins: {
+            legend: {
+              position: "bottom",
+              labels: {
+                color: "#AEB8C4",
+                boxWidth: 10,
+                padding: 16,
+                font: { family: "Inter", size: 12 },
+              },
+            },
+            tooltip: {
+              callbacks: {
+                label: (ctx) => ` ${ctx.dataset.label}: ${ctx.parsed.y}${yUnit}`,
+              },
+            },
+          },
+          scales: {
+            x: {
+              ticks: {
+                color: "#8B97A6",
+                font: { family: "IBM Plex Mono", size: 11 },
+              },
+              grid: { color: "#1A232E" },
+            },
+            y: {
+              ticks: {
+                color: "#8B97A6",
+                font: { family: "IBM Plex Mono", size: 11 },
+                callback: (v) => v + yUnit,
+              },
+              grid: { color: "#1A232E" },
+            },
+          },
+          maintainAspectRatio: false,
+        };
+      }
+
+      /* =================================================================
+     4a. REPORTS — chart builders for in-chat Copilot widgets
+        (canvases are created dynamically per chat bubble, so these take
+        a canvas element rather than a fixed DOM id)
+  ==================================================================*/
+      function renderMacroTrendChart(canvasEl) {
+        return new Chart(canvasEl.getContext("2d"), {
+          type: "line",
+          data: {
+            labels: REPORTS_MACRO_TREND.labels,
+            datasets: [
+              {
+                label: "Open Rate",
+                data: REPORTS_MACRO_TREND.open,
+                borderColor: "#2FD8B0",
+                backgroundColor: "transparent",
+                pointRadius: 3,
+                tension: 0.35,
+              },
+              {
+                label: "Click-through Rate",
+                data: REPORTS_MACRO_TREND.ctr,
+                borderColor: "#7C8CF6",
+                backgroundColor: "transparent",
+                pointRadius: 3,
+                tension: 0.35,
+              },
+              {
+                label: "Conversion Rate",
+                data: REPORTS_MACRO_TREND.conv,
+                borderColor: "#F0A93E",
+                backgroundColor: "transparent",
+                pointRadius: 3,
+                tension: 0.35,
+              },
+            ],
+          },
+          options: reportsChartOptions("%"),
+        });
+      }
+
+      function renderMacroChannelChart(canvasEl) {
+        return new Chart(canvasEl.getContext("2d"), {
+          type: "bar",
+          data: {
+            labels: REPORTS_MACRO_CHANNEL.labels,
+            datasets: [
+              {
+                label: "Open Rate",
+                data: REPORTS_MACRO_CHANNEL.open,
+                backgroundColor: "#2FD8B0",
+                borderRadius: 4,
+              },
+              {
+                label: "Click-through Rate",
+                data: REPORTS_MACRO_CHANNEL.ctr,
+                backgroundColor: "#7C8CF6",
+                borderRadius: 4,
+              },
+              {
+                label: "Conversion Rate",
+                data: REPORTS_MACRO_CHANNEL.conv,
+                backgroundColor: "#F0A93E",
+                borderRadius: 4,
+              },
+            ],
+          },
+          options: reportsChartOptions("%"),
+        });
+      }
+
+      function renderComparisonTrendChart(canvasEl, nameA, nameB) {
+        const a = CAMPAIGN_COMPARISON_DATA[nameA];
+        const b = CAMPAIGN_COMPARISON_DATA[nameB];
+        return new Chart(canvasEl.getContext("2d"), {
+          type: "line",
+          data: {
+            labels: REPORTS_MACRO_TREND.labels,
+            datasets: [
+              {
+                label: nameA,
+                data: a.trend,
+                borderColor: a.color,
+                backgroundColor: "transparent",
+                pointRadius: 3,
+                tension: 0.35,
+              },
+              {
+                label: nameB,
+                data: b.trend,
+                borderColor: b.color,
+                backgroundColor: "transparent",
+                pointRadius: 3,
+                tension: 0.35,
+              },
+            ],
+          },
+          options: reportsChartOptions("%"),
+        });
+      }
+
+      function renderComparisonChannelChart(canvasEl, nameA, nameB) {
+        const a = CAMPAIGN_COMPARISON_DATA[nameA];
+        const b = CAMPAIGN_COMPARISON_DATA[nameB];
+        return new Chart(canvasEl.getContext("2d"), {
+          type: "bar",
+          data: {
+            labels: ["Open Rate", "Click-through Rate", "Conversion Rate"],
+            datasets: [
+              {
+                label: nameA,
+                data: [a.channel.open, a.channel.ctr, a.channel.conv],
+                backgroundColor: a.color,
+                borderRadius: 4,
+              },
+              {
+                label: nameB,
+                data: [b.channel.open, b.channel.ctr, b.channel.conv],
+                backgroundColor: b.color,
+                borderRadius: 4,
+              },
+            ],
+          },
+          options: reportsChartOptions("%"),
+        });
+      }
+
+      /* =================================================================
+     6. AI STRATEGY SIMULATOR — chat interface (AI Copilot tab)
+  ==================================================================*/
+      const chatThread = document.getElementById("chat-thread");
+      const chatInput = document.getElementById("chat-input");
+      const chatSendBtn = document.getElementById("chat-send-btn");
+      let widgetCounter = 0;
+      let simulationBusy = false;
+
+      function scrollChatToBottom() {
+        chatThread.scrollTop = chatThread.scrollHeight;
+      }
+
+      // Swaps the centered welcome/quick-prompt state for the active chat thread
+      function hideWelcome() {
+        const welcome = document.getElementById("copilot-welcome");
+        if (welcome && !welcome.classList.contains("hidden")) {
+          welcome.classList.add("hidden");
+        }
+        if (chatThread.classList.contains("hidden")) {
+          chatThread.classList.remove("hidden");
+        }
+      }
+
+      // "New Chat" — clears the thread and brings back the welcome screen + quick prompts
+      function resetCopilotChat() {
+        chatThread.innerHTML = "";
+        chatThread.classList.add("hidden");
+        const welcome = document.getElementById("copilot-welcome");
+        if (welcome) welcome.classList.remove("hidden");
+        chatInput.value = "";
+        simulationBusy = false;
+        chatSendBtn.classList.remove("opacity-70", "pointer-events-none");
+      }
+
+      function appendUserMessage(text) {
+        const bubble = document.createElement("div");
+        bubble.className =
+          "chat-bubble-user px-3.5 py-2.5 max-w-[92%] ml-auto reveal";
+        bubble.innerHTML = `<p class="text-sm text-mist-100 leading-relaxed">${text}</p>`;
+        chatThread.appendChild(bubble);
+        scrollChatToBottom();
+      }
+
+      function appendTypingIndicator() {
+        const wrap = document.createElement("div");
+        wrap.id = "typing-indicator";
+        wrap.className =
+          "chat-bubble-ai px-3.5 py-2.5 max-w-[92%] flex items-center gap-1.5 reveal";
+        wrap.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-copilot typing-dot"></span><span class="w-1.5 h-1.5 rounded-full bg-copilot typing-dot"></span><span class="w-1.5 h-1.5 rounded-full bg-copilot typing-dot"></span>`;
+        chatThread.appendChild(wrap);
+        scrollChatToBottom();
+      }
+      function removeTypingIndicator() {
+        const el = document.getElementById("typing-indicator");
+        if (el) el.remove();
+      }
+
+      /* =================================================================
+     6a. QUICK PROMPTS — welcome-screen cards route into one of 4 flows
+  ==================================================================*/
+      const QUICK_PROMPTS = {
+        clean: "Upload a messy CSV for auto-cleaning and integration.",
+        audience: "Show me high-value VIPs currently at risk of leaving.",
+        simulate: "What if I offer a 15% discount to at-risk VIPs?",
+        campaigns: "Show me an overview report of our recent campaigns.",
+      };
+
+      function startQuickPrompt(kind) {
+        const text = QUICK_PROMPTS[kind];
+        if (!text || simulationBusy) return;
+        simulationBusy = true;
+        hideWelcome();
+        appendUserMessage(text);
+        appendTypingIndicator();
+        setTimeout(() => {
+          removeTypingIndicator();
+          if (kind === "clean") runCleanDataFlow();
+          else if (kind === "audience") runFindAudiencesFlow();
+          else if (kind === "simulate") runSimulateStrategyFlow();
+          else if (kind === "campaigns") runAnalyzeCampaignsFlow();
+          simulationBusy = false;
+        }, 1000);
+      }
+
+      /* =================================================================
+     6b. FLOW 1 — Clean Data (upload → integration & cleaning report)
+  ==================================================================*/
+      function runCleanDataFlow() {
+        widgetCounter += 1;
+        const id = widgetCounter;
+        const wrap = document.createElement("div");
+        wrap.className = "chat-bubble-ai px-4 py-3.5 max-w-[95%] reveal";
+        wrap.innerHTML = `
+      <p class="text-sm text-mist-100 leading-relaxed mb-3">I can help with that. Please upload your raw customer data (CSV/Excel) so I can clean, normalize, and integrate it into the churn model.</p>
+      <div id="upload-zone-${id}" class="rounded-lg border-2 border-dashed border-ink-600 bg-ink-900/60 px-4 py-6 flex flex-col items-center text-center gap-3">
+        <svg class="w-6 h-6 text-mist-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12m0 0l-4-4m4 4l4-4"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
+        <p class="text-[12px] text-mist-300">Drag &amp; drop a file here, or</p>
+        <button onclick="simulateUpload(${id})" class="text-xs font-semibold text-white bg-copilot hover:bg-copilot/90 active:scale-[.98] rounded-lg px-3.5 py-2 transition-all">
+          Simulate Upload: raw_customers_q2.csv
+        </button>
+      </div>
+    `;
+        chatThread.appendChild(wrap);
+        scrollChatToBottom();
+      }
+
+      function simulateUpload(id) {
+        const zone = document.getElementById(`upload-zone-${id}`);
+        if (!zone || zone.dataset.busy) return;
+        zone.dataset.busy = "true";
+        zone.innerHTML = `
+      <svg class="w-5 h-5 text-copilot animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3a9 9 0 1 0 9 9" stroke-linecap="round"/></svg>
+      <p class="text-[12px] text-mist-300">Uploading raw_customers_q2.csv…</p>
+    `;
+        scrollChatToBottom();
+        setTimeout(() => {
+          zone.innerHTML = `
+        <svg class="w-5 h-5 text-signal" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 12.5l5 5L20 6.5"/></svg>
+        <p class="text-[12px] text-signal font-medium">raw_customers_q2.csv uploaded</p>
+      `;
+          appendTypingIndicator();
+          setTimeout(() => {
+            removeTypingIndicator();
+            chatThread.appendChild(buildCleaningReportWidget());
+            scrollChatToBottom();
+          }, 900);
+        }, 1500);
+      }
+
+      function buildCleaningReportWidget() {
+        const wrap = document.createElement("div");
+        wrap.className = "chat-bubble-ai px-4 py-3.5 max-w-[95%] reveal";
+        wrap.innerHTML = `
+      <p class="text-[11px] uppercase tracking-wide text-copilot font-medium mb-2 flex items-center gap-1.5">
+        <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12.5l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg>
+        Data Integration &amp; Cleaning Report
+      </p>
+      <ul class="space-y-2 text-[12.5px] text-mist-100 leading-relaxed mb-3">
+        <li><span class="text-mist-300">Rows Processed:</span> <span class="font-semibold">50,000</span></li>
+        <li><span class="text-mist-300">Missing Values Handled:</span> Filled 1,204 missing 'Last Support Ticket' dates with median values.</li>
+        <li><span class="text-mist-300">Normalization:</span> Standardized 'Daily Usage (Mins)'.</li>
+        <li><span class="text-mist-300">Format Correction:</span> Converted 840 string-based payment dates into ISO-8601 timestamps.</li>
+      </ul>
+      <button onclick="switchTab('churn')" class="w-full rounded-lg bg-signal hover:bg-signal/90 active:scale-[.98] text-ink-950 font-semibold text-sm py-2.5 transition-all">Run Churn Prediction on New Data</button>
+    `;
+        return wrap;
+      }
+
+      /* =================================================================
+     6c. FLOW 2 — Find Audiences (VIP table → win-back campaign)
+  ==================================================================*/
+      function runFindAudiencesFlow() {
+        widgetCounter += 1;
+        const id = widgetCounter;
+        const wrap = document.createElement("div");
+        wrap.className = "chat-bubble-ai px-4 py-3.5 max-w-[95%] reveal";
+        wrap.innerHTML = `
+      <p class="text-sm text-mist-100 leading-relaxed mb-3">I found <span class="font-semibold">96 VIP customers</span> with declining engagement in the last 14 days. This puts <span class="text-amber font-medium">RM 45,000</span> at risk.</p>
+      <div class="rounded-lg border border-ink-600 overflow-hidden mb-3">
+        <table class="w-full text-[12.5px]">
+          <thead>
+            <tr class="text-left text-[10px] uppercase tracking-wide text-mist-300 bg-ink-900/60">
+              <th class="px-3 py-2 font-medium">Customer</th>
+              <th class="px-3 py-2 font-medium">Segment</th>
+              <th class="px-3 py-2 font-medium text-right">Engagement (14d)</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-ink-600 font-mono">
+            <tr><td class="px-3 py-2 font-body text-mist-100">Aisyah R.</td><td class="px-3 py-2 text-mist-300">VIP</td><td class="px-3 py-2 text-coral text-right">▼ 38%</td></tr>
+            <tr><td class="px-3 py-2 font-body text-mist-100">Farah Z.</td><td class="px-3 py-2 text-mist-300">VIP</td><td class="px-3 py-2 text-coral text-right">▼ 31%</td></tr>
+            <tr><td class="px-3 py-2 font-body text-mist-100">Sofia H.</td><td class="px-3 py-2 text-mist-300">VIP</td><td class="px-3 py-2 text-coral text-right">▼ 27%</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div id="action-zone-audience-${id}"></div>
+    `;
+        chatThread.appendChild(wrap);
+        const zone = wrap.querySelector(`#action-zone-audience-${id}`);
+        const btn = document.createElement("button");
+        btn.className =
+          "w-full rounded-lg bg-copilot hover:bg-copilot/90 active:scale-[.98] text-white font-semibold text-sm py-2.5 transition-all";
+        btn.textContent = "Draft a Win-back Campaign";
+        btn.onclick = () => draftWinbackCampaign(btn);
+        zone.appendChild(btn);
+        scrollChatToBottom();
+      }
+
+      function draftWinbackCampaign(btn) {
+        if (btn.disabled) return;
+        btn.disabled = true;
+        btn.classList.add("opacity-50", "cursor-not-allowed");
+        appendUserMessage("Draft a win-back campaign");
+        appendTypingIndicator();
+        setTimeout(() => {
+          removeTypingIndicator();
+          widgetCounter += 1;
+          chatThread.appendChild(
+            buildSimulationReport(widgetCounter, {
+              segment: "At-Risk VIPs",
+              probability: 68,
+              revenue: "RM 30,600",
+              approveLabel: "Approve &amp; Deploy",
+              successTitle: "Campaign Deployed!",
+              dispatchNote:
+                "Win-back offers deployed to 96 at-risk VIP customers.",
+              reasonsHTML: `
+            <li><span class="text-mist-300">68% success:</span> this VIP cohort has a strong purchase history but engagement has dropped 27–38% in 14 days — a classic recoverable-churn pattern.</li>
+            <li><span class="text-mist-300">RM 30,600 retained:</span> ~96 targeted VIPs × average RM 39/mo plan value × 68% conversion × 12-month retention estimate.</li>
+            <li><span class="text-mist-300">Timing matters:</span> outreach within 14 days of an engagement drop recovers VIP accounts at more than double the rate of outreach after 30 days.</li>
+          `,
+            }),
+          );
+          scrollChatToBottom();
+        }, 1100);
+      }
+
+      /* =================================================================
+     6d. FLOW — Simulate Strategy (quick-prompt card + free-typed what-ifs)
+  ==================================================================*/
+      function runSimulateStrategyFlow() {
+        widgetCounter += 1;
+        chatThread.appendChild(
+          buildSimulationReport(widgetCounter, {
+            segment: "At-Risk VIPs (15% Discount)",
+            probability: 74,
+            revenue: "RM 52,300",
+            reasonsHTML: `
+          <li><span class="text-mist-300">74% success:</span> VIPs are more price-sensitive to loyalty gestures than blanket discounts — a targeted 15% offer converts well above the 68% baseline seen on broader segments.</li>
+          <li><span class="text-mist-300">RM 52,300 retained:</span> ~1,200 at-risk VIPs × higher average plan value × 74% conversion × 12-month retention estimate.</li>
+          <li><span class="text-mist-300">Low cannibalization risk:</span> full-price VIP renewals historically happen in the first week of the billing cycle, before this offer would even be seen.</li>
+        `,
+          }),
+        );
+        scrollChatToBottom();
+      }
+
+      // Builds the Simulation Report card — with an explicit "Why" breakdown, not just numbers
+      function buildSimulationReport(id, opts = {}) {
+        const segment = opts.segment || "Free Trial, 30–40";
+        const probability = opts.probability || 68;
+        const revenue = opts.revenue || "RM 45,000";
+        const reasonsHTML =
+          opts.reasonsHTML ||
+          `
+        <li><span class="text-mist-300">${probability}% success:</span> this cohort logs in 3+ times/week without upgrading — high engagement, high price sensitivity. Similar past offers converted 65–70% of comparable users.</li>
+        <li><span class="text-mist-300">${revenue} retained:</span> based on targeted users × plan value × ${probability}% conversion × 12-month retention estimate.</li>
+        <li><span class="text-mist-300">Low cannibalization risk:</span> full-price converters in this segment historically convert in the first 5 days, before a discount would even be seen.</li>
+      `;
+
+        const wrap = document.createElement("div");
+        wrap.className = "chat-bubble-ai px-4 py-3.5 max-w-[95%] reveal";
+        wrap.innerHTML = `
+      <p class="text-[11px] uppercase tracking-wide text-copilot font-medium mb-2 flex items-center gap-1.5">
+        <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v3M12 18v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M3 12h3M18 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/><circle cx="12" cy="12" r="3.2"/></svg>
+        Simulation Report
+      </p>
+
+      <div class="grid grid-cols-2 gap-3 mb-3">
+        <div class="rounded-lg bg-ink-900 border border-ink-600 px-3 py-2">
+          <p class="text-[10px] uppercase text-mist-300">Target Segment</p>
+          <p class="text-sm font-semibold text-mist-100 mt-0.5">${segment}</p>
+        </div>
+        <div class="rounded-lg bg-ink-900 border border-ink-600 px-3 py-2">
+          <p class="text-[10px] uppercase text-mist-300">Probability of Success</p>
+          <p class="text-sm font-semibold text-signal mt-0.5">${probability}%</p>
+        </div>
+        <div class="rounded-lg bg-ink-900 border border-ink-600 px-3 py-2 col-span-2">
+          <p class="text-[10px] uppercase text-mist-300">Expected Revenue Retained</p>
+          <p class="text-sm font-semibold text-amber mt-0.5">${revenue}</p>
+        </div>
+      </div>
+
+      <div class="rounded-lg bg-ink-900/60 border border-ink-600 px-3.5 py-3 mb-3">
+        <p class="text-[10px] uppercase tracking-wide text-copilot font-medium mb-2">Why these numbers</p>
+        <ul class="space-y-1.5 text-[12.5px] text-mist-100 leading-relaxed list-disc list-inside">
+          ${reasonsHTML}
+        </ul>
+      </div>
+
+      <div id="action-zone-${id}" class="mt-1"></div>
+    `;
+        const actionZone = wrap.querySelector(`#action-zone-${id}`);
+        actionZone.appendChild(
+          buildApproveButton(id, {
+            label: opts.approveLabel || "Approve &amp; Send Emails",
+            successTitle: opts.successTitle || "Emails Dispatched!",
+            dispatchNote:
+              opts.dispatchNote ||
+              `Personalized offers sent to the ${segment} segment.`,
+          }),
+        );
+        return wrap;
+      }
+
+      function buildApproveButton(id, opts = {}) {
+        const label = opts.label || "Approve &amp; Send Emails";
+        const btn = document.createElement("button");
+        btn.id = `approve-btn-${id}`;
+        btn.className =
+          "w-full flex items-center justify-center gap-2 rounded-lg bg-signal hover:bg-signal/90 active:scale-[.98] text-ink-950 font-semibold text-sm py-2.5 transition-all";
+        btn.innerHTML = `<svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 12.5l5 5L20 6.5"/></svg>${label}`;
+        btn.onclick = () =>
+          approveCampaign(
+            id,
+            opts.successTitle || "Emails Dispatched!",
+            opts.dispatchNote || "Personalized offers sent to the targeted segment.",
+          );
+        return btn;
+      }
+
+      function approveCampaign(id, successTitle, dispatchNote) {
+        const btn = document.getElementById(`approve-btn-${id}`);
+        if (!btn || btn.disabled) return;
+        btn.disabled = true;
+        btn.classList.add("opacity-80", "cursor-progress");
+        btn.innerHTML = `<svg class="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 3a9 9 0 1 0 9 9" stroke-linecap="round"/></svg>Processing…`;
+
+        setTimeout(() => {
+          const success = document.createElement("div");
+          success.className = "chat-bubble-ai px-3.5 py-2.5 max-w-[92%] reveal";
+          success.innerHTML = `
+        <p class="text-sm text-signal font-semibold flex items-center gap-1.5">
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 12.5l5 5L20 6.5"/></svg>
+          ${successTitle}
+        </p>
+        <p class="text-[12px] text-mist-300 mt-1">${dispatchNote}</p>`;
+          chatThread.appendChild(success);
+          scrollChatToBottom();
+
+          btn.disabled = false;
+          btn.classList.remove(
+            "opacity-80",
+            "cursor-progress",
+            "bg-signal",
+            "hover:bg-signal/90",
+            "text-ink-950",
+          );
+          btn.classList.add("bg-coral", "hover:bg-coral/90", "text-white");
+          btn.innerHTML = `<svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 6l12 12M18 6L6 18"/></svg>Revoke Campaign`;
+          btn.onclick = () => revokeCampaign(id);
+          lightPipelineToAction();
+        }, 1100);
+      }
+
+      function revokeCampaign(id) {
+        alert("Campaign execution halted. Emails revoked.");
+        const btn = document.getElementById(`approve-btn-${id}`);
+        if (btn) btn.disabled = true;
+        btn.classList.add("opacity-50", "cursor-not-allowed");
+      }
+
+      /* =================================================================
+     6e. FLOW 3 — Analyze Campaigns (macro report widget, in-chat charts)
+  ==================================================================*/
+      function runAnalyzeCampaignsFlow() {
+        widgetCounter += 1;
+        const id = widgetCounter;
+        const trendId = `chart-trend-macro-${id}`;
+        const channelId = `chart-channel-macro-${id}`;
+        const wrap = document.createElement("div");
+        wrap.className = "chat-bubble-ai px-4 py-3.5 max-w-[97%] reveal";
+        wrap.innerHTML = `
+      <p class="text-sm text-mist-100 leading-relaxed mb-3">Here is the overall macro trend and performance report across all your recent campaigns.</p>
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mb-4">
+        <div class="rounded-lg bg-ink-900 border border-ink-600 px-3 py-2.5">
+          <p class="text-[10px] uppercase tracking-wide text-mist-300">Open Rate</p>
+          <p class="text-base font-display font-semibold text-signal mt-0.5">42%</p>
+        </div>
+        <div class="rounded-lg bg-ink-900 border border-ink-600 px-3 py-2.5">
+          <p class="text-[10px] uppercase tracking-wide text-mist-300">Click-through Rate</p>
+          <p class="text-base font-display font-semibold text-copilot mt-0.5">18%</p>
+        </div>
+        <div class="rounded-lg bg-ink-900 border border-ink-600 px-3 py-2.5">
+          <p class="text-[10px] uppercase tracking-wide text-mist-300">Conversion Rate</p>
+          <p class="text-base font-display font-semibold text-amber mt-0.5">9.4%</p>
+        </div>
+        <div class="rounded-lg bg-ink-900 border border-ink-600 px-3 py-2.5">
+          <p class="text-[10px] uppercase tracking-wide text-mist-300">Revenue Generated</p>
+          <p class="text-base font-display font-semibold text-mist-100 mt-0.5">RM 186,400</p>
+        </div>
+      </div>
+      <div class="rounded-lg bg-ink-900/60 border border-ink-600 p-3 mb-3">
+        <p class="text-[11px] font-medium text-mist-100 mb-2">Campaign Performance Trend</p>
+        <div class="h-48"><canvas id="${trendId}"></canvas></div>
+      </div>
+      <div class="rounded-lg bg-ink-900/60 border border-ink-600 p-3 mb-3">
+        <p class="text-[11px] font-medium text-mist-100 mb-2">Channel Comparison</p>
+        <div class="h-44"><canvas id="${channelId}"></canvas></div>
+      </div>
+      <div id="action-zone-macro-${id}"></div>
+    `;
+        chatThread.appendChild(wrap);
+
+        const zone = wrap.querySelector(`#action-zone-macro-${id}`);
+        const btn = document.createElement("button");
+        btn.className =
+          "w-full rounded-lg bg-copilot hover:bg-copilot/90 active:scale-[.98] text-white font-semibold text-sm py-2.5 transition-all";
+        btn.textContent = "Compare VIP Loyalty Boost vs. Spring Win-back";
+        btn.onclick = () => runComparisonFlow(btn);
+        zone.appendChild(btn);
+
+        scrollChatToBottom();
+        // Canvases are now attached to the DOM — safe to initialize Chart.js
+        renderMacroTrendChart(document.getElementById(trendId));
+        renderMacroChannelChart(document.getElementById(channelId));
+      }
+
+      /* =================================================================
+     6f. FLOW 4 — Campaign Comparison (two-campaign in-chat charts)
+  ==================================================================*/
+      function runComparisonFlow(btn) {
+        if (btn.disabled) return;
+        btn.disabled = true;
+        btn.classList.add("opacity-50", "cursor-not-allowed");
+        appendUserMessage(
+          "Compare the performance of VIP Loyalty Boost and Spring Win-back.",
+        );
+        appendTypingIndicator();
+        setTimeout(() => {
+          removeTypingIndicator();
+          widgetCounter += 1;
+          const id = widgetCounter;
+          const trendId = `chart-trend-compare-${id}`;
+          const channelId = `chart-channel-compare-${id}`;
+          const wrap = document.createElement("div");
+          wrap.className = "chat-bubble-ai px-4 py-3.5 max-w-[97%] reveal";
+          wrap.innerHTML = `
+        <p class="text-sm text-mist-100 leading-relaxed mb-3">Here is the side-by-side performance comparison. <span class="font-semibold text-signal">VIP Loyalty Boost</span> is significantly outperforming <span class="font-medium">Spring Win-back</span> in conversion rate.</p>
+        <div class="rounded-lg bg-ink-900/60 border border-ink-600 p-3 mb-3">
+          <p class="text-[11px] font-medium text-mist-100 mb-2">Campaign Performance Trend</p>
+          <div class="h-48"><canvas id="${trendId}"></canvas></div>
+        </div>
+        <div class="rounded-lg bg-ink-900/60 border border-ink-600 p-3">
+          <p class="text-[11px] font-medium text-mist-100 mb-2">Channel Comparison</p>
+          <div class="h-44"><canvas id="${channelId}"></canvas></div>
+        </div>
+      `;
+          chatThread.appendChild(wrap);
+          scrollChatToBottom();
+          renderComparisonTrendChart(
+            document.getElementById(trendId),
+            "VIP Loyalty Boost",
+            "Spring Win-back",
+          );
+          renderComparisonChannelChart(
+            document.getElementById(channelId),
+            "VIP Loyalty Boost",
+            "Spring Win-back",
+          );
+        }, 1100);
+      }
+
+      /* =================================================================
+     6g. Free-typed "what if" questions from the input bar
+  ==================================================================*/
+      function sendSimulation() {
+        const text = chatInput.value.trim();
+        if (!text || simulationBusy) return;
+        simulationBusy = true;
+        hideWelcome();
+        appendUserMessage(text);
+        chatInput.value = "";
+        chatSendBtn.classList.add("opacity-70", "pointer-events-none");
+        appendTypingIndicator();
+        setTimeout(() => {
+          removeTypingIndicator();
+          widgetCounter += 1;
+          chatThread.appendChild(buildSimulationReport(widgetCounter));
+          scrollChatToBottom();
+          chatSendBtn.classList.remove("opacity-70", "pointer-events-none");
+          simulationBusy = false;
+        }, 1100);
+      }
+
+      chatInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" && !e.shiftKey) {
+          e.preventDefault();
+          sendSimulation();
+        }
+      });
+
+      /* =================================================================
+     7. INITIAL LOAD — Overview is the default visible tab
+  ==================================================================*/
+      initOverviewTrendChart();
+      initOverviewSegmentChart();
+      chartsInitialized.overviewTrend = true;
+      chartsInitialized.overviewSegment = true;
+    </script>
+  </body>
+</html>
